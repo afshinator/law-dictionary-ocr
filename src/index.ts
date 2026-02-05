@@ -5,11 +5,12 @@
  * 2. Transmits the image data to the Google Cloud Vision API.
  * 3. Receives a hierarchical JSON object containing detected text and layout metadata.
  * 4. Saves that JSON object to 'data/output' using the original filename.
+ * 5. Explicitly closes the API connection to ensure the process exits gracefully.
  */
 
 import 'dotenv/config';
 import * as path from 'node:path';
-import { performOCR } from './drivers/vision.js';
+import { performOCR, closeVisionClient } from './drivers/vision.js';
 import { ensureDirectories, getScanFiles, saveOcrResult } from './utils/file-processor.js';
 
 async function main(): Promise<void> {
@@ -45,6 +46,11 @@ async function main(): Promise<void> {
       console.error(`Error encountered while processing ${file}:`, error);
     }
   }
+
+  // Shutdown the network client once the loop is finished. 
+  // This resolves the issue where the script stays active after processing is complete.
+  await closeVisionClient();
+  console.log('All tasks complete. Connection closed.');
 }
 
 // Execute the main loop and handle any unhandled rejections in the promise chain.

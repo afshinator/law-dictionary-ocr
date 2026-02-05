@@ -42,3 +42,12 @@ export const performOCR = async (imagePath: string) => {
     throw error;
   }
 };
+
+/**
+ * Closes the underlying gRPC connection to Google Cloud.
+ * * Why: The Google SDK maintains a persistent network handle to optimize multiple requests.
+ * * How: This method explicitly shuts down that handle, allowing the Node.js event loop to finish.
+ */
+export const closeVisionClient = async () => {
+  await visionClient.close();
+};
