@@ -4,3 +4,4 @@ dist/
 *.json.key
 data/
 .DS_Store
+gcp-key.json

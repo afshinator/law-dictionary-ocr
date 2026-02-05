@@ -1,6 +1,7 @@
 {
   "name": "law-dictionary-ocr",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,6 +18,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@google-cloud/vision": "^5.3.4",
     "dotenv": "^17.2.3"
   }
 }
