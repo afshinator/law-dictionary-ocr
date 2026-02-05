@@ -1,52 +1,60 @@
-/**
- * Driver for the Google Cloud Vision API.
- * * For a given image file path, this module:
- * 1. Initializes a connection to Google Cloud using the credentials defined in the environment.
- * 2. Configures the request to use 'DOCUMENT_TEXT_DETECTION', which is optimized for dense, small-print text.
- * 3. Provides 'languageHints' for English (en) and Farsi (fa) to improve character recognition accuracy.
- * 4. Returns the 'fullTextAnnotation' object, which includes the text, confidence scores, and coordinate geometry.
+/** src/drivers/vision.ts
+ * DRIVER: Google Cloud Vision API
+ * * PURPOSE: 
+ * Handles the binary transmission of image data to Google's 'DOCUMENT_TEXT_DETECTION' engine.
+ * * MECHANICAL PATH:
+ * 1. Reads the local image file into a raw Buffer to bypass filesystem/protocol mismatches.
+ * 2. Transmits the buffer via gRPC to the Vision API.
+ * 3. Extracts the 'fullTextAnnotation' object which contains the coordinates and character data.
+ * * WHY:
+ * Using raw 'content' (buffers) instead of 'filename' strings prevents the SDK from 
+ * failing on path resolution or binary stream errors.
  */
 
-import { ImageAnnotatorClient } from '@google-cloud/vision';
+import { ImageAnnotatorClient, protos } from '@google-cloud/vision';
+import * as fs from 'node:fs';
 import 'dotenv/config';
 
-// Language hints reduce OCR ambiguity by narrowing the character sets the engine searches for.
+// Language hints narrow the OCR search space, crucial for Farsi/English bilingual text.
 const LANGUAGE_HINTS = ['en', 'fa'];
 
-// The client is instantiated once; it reads the GOOGLE_APPLICATION_CREDENTIALS path from the .env file.
+// The client is instantiated once to manage the persistent gRPC connection to Google.
 const visionClient = new ImageAnnotatorClient();
 
 /**
- * Performs a high-density OCR scan on the provided image.
- * Returns the hierarchical data structure containing pages, blocks, paragraphs, and words.
+ * Executes high-density OCR on a specific image path.
+ * Returns the ITextAnnotation interface which includes pages, blocks, and words.
  */
-export const performOCR = async (imagePath: string) => {
+export const performOCR = async (imagePath: string): Promise<protos.google.cloud.vision.v1.ITextAnnotation | null | undefined> => {
   try {
-    // We send the image source and the context hints in a single batch request.
+    // Reads the file from disk immediately to ensure the bytes are captured.
+    const imageBuffer = fs.readFileSync(imagePath);
+
+    // We use annotateImage to specifically request 'DOCUMENT_TEXT_DETECTION'.
     const [result] = await visionClient.documentTextDetection({
-      image: { source: { filename: imagePath } },
+      image: { content: imageBuffer },
       imageContext: { languageHints: LANGUAGE_HINTS }
     });
 
+    // The fullTextAnnotation is the "rich" response containing geometry and text.
     const fullTextAnnotation = result.fullTextAnnotation;
 
-    // If the API returns a response but no annotation, the image likely contains no readable text.
+    // A success at the API level can still return null if the "Brain" sees no text.
     if (!fullTextAnnotation) {
       throw new Error(`The OCR engine returned an empty result for: ${imagePath}`);
     }
 
     return fullTextAnnotation;
   } catch (error) {
-    // Re-throws the error to the calling function (src/index.ts) for consistent error logging.
-    console.error(`API Request Failure: ${imagePath}`);
+    // Re-throws for the index.ts orchestrator to handle logging.
+    const msg = error instanceof Error ? error.message : 'Unknown API Error';
+    console.error(`[!] API Request Failure: ${imagePath} - ${msg}`);
     throw error;
   }
 };
 
 /**
- * Closes the underlying gRPC connection to Google Cloud.
- * * Why: The Google SDK maintains a persistent network handle to optimize multiple requests.
- * * How: This method explicitly shuts down that handle, allowing the Node.js event loop to finish.
+ * Shuts down the background network handles to allow Node.js to exit the process.
  */
 export const closeVisionClient = async () => {
   await visionClient.close();

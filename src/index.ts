@@ -1,11 +1,13 @@
-/**
- * Entry point for the dictionary digitization pipeline.
- * * For every image file found in the 'data/scans' directory, this script:
- * 1. Resolves the absolute system path for the image.
- * 2. Transmits the image data to the Google Cloud Vision API.
- * 3. Receives a hierarchical JSON object containing detected text and layout metadata.
- * 4. Saves that JSON object to 'data/output' using the original filename.
- * 5. Explicitly closes the API connection to ensure the process exits gracefully.
+/** src/index.ts
+ * ORCHESTRATOR: Dictionary Digitization Pipeline
+ * * PURPOSE:
+ * Manages the sequential flow of data from local scans to the Vision API to the output folder.
+ * * MECHANICAL STEPS:
+ * 1. Bootstraps the environment by ensuring 'data/scans' and 'data/output' exist.
+ * 2. Identifies all valid image files in the scan directory.
+ * 3. Triggers the Vision Driver for each file, ensuring the return object is not null.
+ * 4. Persists the resulting JSON to disk for Phase 2 processing.
+ * 5. Forces a clean process exit to close lingering gRPC network handles.
  */
 
 import 'dotenv/config';
@@ -14,10 +16,10 @@ import { performOCR, closeVisionClient } from './drivers/vision.js';
 import { ensureDirectories, getScanFiles, saveOcrResult } from './utils/file-processor.js';
 
 async function main(): Promise<void> {
-  // Verifies the existence of data/scans and data/output folders before processing.
+  // Prepares the local filesystem directory structure.
   ensureDirectories();
 
-  // Filters the input directory for supported image formats (jpg, png, etc.).
+  // Retrieves the list of .jpg files found in 'data/scans'.
   const files = getScanFiles();
 
   if (files.length === 0) {
@@ -25,36 +27,45 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Iterate through the detected files sequentially to maintain API stability.
+  // Sequential iteration ensures we don't overwhelm the network or local memory.
   for (const file of files) {
     try {
-      console.log(`Starting OCR for: ${file}`);
+      console.log(`Processing: ${file}`);
       
-      // Construct the full path required by the Vision driver.
+      // Resolves the absolute path to the scan file.
       const filePath = path.join(process.cwd(), 'data', 'scans', file);
       
-      // Trigger the OCR extraction; this handles the external network request.
+      // Transfers bytes to Google and receives the hierarchical text object.
       const ocrData = await performOCR(filePath);
 
-      // Write the resulting annotation object to a local JSON file.
-      // This allows for offline processing and LLM refinement in later phases.
-      saveOcrResult(file, ocrData);
-      
-      console.log(`Successfully processed and saved JSON for: ${file}`);
+      if (ocrData) {
+        // Transports the object to the file-processor to be written as JSON.
+        saveOcrResult(file, ocrData);
+        console.log(`Saved OCR data for: ${file}`);
+      } else {
+        console.warn(`[!] Skipping ${file}: API returned no content.`);
+      }
     } catch (error) {
-      // Catch and report errors for specific files to prevent the entire batch from failing.
+      // Prevents a single failed scan from stopping the entire batch.
       console.error(`Error encountered while processing ${file}:`, error);
     }
   }
 
-  // Shutdown the network client once the loop is finished. 
-  // This resolves the issue where the script stays active after processing is complete.
+  // Gracefully terminates the network connection.
   await closeVisionClient();
-  console.log('All tasks complete. Connection closed.');
+  console.log('Batch processing complete.');
 }
 
-// Execute the main loop and handle any unhandled rejections in the promise chain.
-main().catch((err) => {
-  console.error('The digitization process encountered a fatal error:', err);
-  process.exit(1);
-});
+// Executes the loop and provides a hard-exit to clear the terminal prompt.
+main()
+  .then(() => {
+    console.log('Finalizing filesystem and exiting...');
+    // A 100ms delay ensures the OS has finished writing the last JSON file.
+    setTimeout(() => {
+      process.exit(0);
+    }, 100);
+  })
+  .catch((err) => {
+    console.error('Fatal failure in pipeline:', err);
+    process.exit(1);
+  });
