@@ -15,6 +15,52 @@ The objective is to move from raw physical scans to a fine-tuned model capable o
 
 ---
 
+## Prerequisites
+
+* **Node.js** (project uses ESM).
+* **Google Cloud Vision API:** A GCP project with the Vision API enabled, and one of:
+  * **Application Default Credentials** (e.g. `gcloud auth application-default login`), or
+  * A **service account key file** (e.g. `gcp-key.json`) with `GOOGLE_APPLICATION_CREDENTIALS` set in `.env` to that file’s path.
+
+## Install
+
+```bash
+npm install
+```
+
+## Usage
+
+1. Put scanned dictionary pages in **`data/scans/`** (supported: `.jpg`, `.jpeg`, `.png`, `.tiff`). The pipeline creates `data/scans` and `data/output` if missing.
+2. Run the OCR pipeline:
+
+   ```bash
+   npm run dev
+   ```
+
+   This processes each image in `data/scans/` with Google Vision `DOCUMENT_TEXT_DETECTION` (with English and Farsi hints), then writes one JSON per image to **`data/output/`** (same base name, e.g. `05.jpg` → `05.json`). Each JSON contains blocks, paragraphs, words, bounding boxes, and confidence scores for Phase 2.
+
+## Validation
+
+To audit OCR quality and structure of the saved JSON (average confidence, low-confidence word count, block count, text preview):
+
+```bash
+npx tsx src/validate.ts
+```
+
+Aim for average confidence > 0.90 for production-grade dictionary data.
+
+## Debugging
+
+If Vision returns empty or unexpected results for a given scan:
+
+```bash
+npx tsx src/debug-vision.ts
+```
+
+Use this to inspect the Vision payload and image-properties response for a single file in `data/scans/`.
+
+---
+
 ## Technical Roadmap
 
 ### Phase 1: Image Acquisition & OCR (Current)
@@ -49,7 +95,7 @@ Developing the final "Last-Mile" delivery system.
 
 ---
 
-## Proposed Directory Structure
+## Directory Structure
 
 ```text
 ├── data/
