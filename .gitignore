@@ -1,7 +1,9 @@
 node_modules/
 dist/
 .env
-*.json.key
+
+# data/ holds the irreplaceable scans + Vision JSON.
+# It is gitignored (as in v1) so source images never hit the repo -- BUT
+# "untracked" is NOT "backed up". Per docs 6 and 12: back data/ up to durable
+# storage (cloud bucket / external drive) separately. This line is a risk, not a plan.
 data/
-.DS_Store
-gcp-key.json
