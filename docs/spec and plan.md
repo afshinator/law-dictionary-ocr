@@ -179,7 +179,7 @@ chunk-boundary failure modes — use that.
 | Search correctness | Phase 4 | correct entry on test set |
 | RAG evals | Phase 5 | harness green + failure-mode table |
 
-*All numeric gates above are provisional consts in `src/eval/thresholds.ts`; they are calibrated from the first real measurement (T5 / T10), not fixed here. The `needs_review` confidence cutoff (`LOW_CONFIDENCE_WORD`) is the one data-informed value — set from the page-05 confidence distribution.*
+*All numeric gates above are provisional consts in `src/eval/thresholds.ts`; they are calibrated from the first real measurement (T5 / T10), not fixed here. The `needs_review` confidence cutoff (`LOW_CONFIDENCE_WORD`) is the one data-informed value — set from the page-05 confidence distribution. The cutoff is compared against the **per-word/line minimum**, not the entry mean (register #8 / `T-FIX1`); the value (currently 0.85) is still ratified in T5, but the comparison is decided.*
 
 ---
 
@@ -239,6 +239,7 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 | **T11** → T10 | Retrieval API: exact/prefix/fuzzy (`pg_trgm`) + Farsi keyword | 4 | query set results |
 | **T12** → T11 | Bidirectional UI + per-entry source crop | 4 | working app; **Phase-4 gate** |
 | **T13** (optional) → T12 | Layer 2 per RAG Quality Bar: instrument → triage → evals → hybrid/rerank | 5 | failure-mode table from traces; eval harness |
+| **T-FIX1** → (after data check-in) | Gate `needs_review` on the **minimum** cited word/line confidence, not the entry mean, in `toEntry()` (`parser.ts`). Current code compares `entry.confidence` (the mean) to `LOW_CONFIDENCE_WORD`, so a single low-confidence word (e.g. `jopa` 0.55) is diluted by its neighbours and never flags. Keep the mean as a display metric if wanted; **gate on min**. Must land before **T10** (corpus-wide `needs_review`-rate gate). Independent of data to *write* (synthetic tests), deferred by choice until old data is checked in. | 2 | the `toEntry` routing handoff's min-confidence spec-intent test (currently expected-red) goes green; an F5-style entry with a sub-threshold word flags `needs_review` |
 
 **Recommended sequence** (dependency order, not a live status): T0 → T1/T1b → (T2, T4 in parallel) → T3 → T5.
 
@@ -255,6 +256,8 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 | 5 | Backup mechanism (bucket vs drive) | pick in T7 |
 | 6 | `needs_review` acceptable rate | set in T10 |
 | 7 | Column-split method | RESOLVED: per-page `detectColumnSplitX` (largest central-band x-gap) replaces the hardcoded x≈1100 the guide assumed; pages are not consistently aligned (page 07 is ~120px left of 05/06). Verified on 05–07. |
+| 8 | `needs_review` confidence comparison — entry mean vs per-word min (Finding F-A) | RESOLVED: gate on the **per-word/line minimum**, not the entry mean. Rationale: conservative (false positive = a glance; false negative = a wrong legal term shipped unreviewed) and it surfaces the exact garbage-token case the pipeline exists to catch — F5's `jopa` 0.55 / `hups` 0.61 are diluted to an entry mean ≈0.875 that clears 0.85 and never flags. Current `toEntry()` uses the mean → **bug**, tracked as `T-FIX1`, deferred until old data is checked in. This decides the *comparison* only; the threshold *value* (0.85) is still ratified in T5. |
+| 9 | Open validation findings from the docs/06 round (F-C, F-D, F-E) — flagged, NOT resolved | OPEN, for human ruling: **F-C** `looksSuspiciousFa`'s `<=2` rule routes every legitimate 2-char Farsi equivalent (e.g. `با`) to `needs_review` permanently — accept the review-queue cost, or refine? **F-D** when all cited lines have null confidence, `entry.confidence` is null and the low-confidence gate is skipped (unknown treated as fine, not review-worthy) — intended? **F-E** only `translation_fa` is normalized; Farsi that lands in `definition_en` (examples/cross-refs, per docs/04 slotting) is stored un-normalized — harmless today, matters only if definitions become keyword-searchable. |
 
 ---
 
