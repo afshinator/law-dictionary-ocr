@@ -1,0 +1,622 @@
+{
+  "_comment": "T2 golden fixtures (docs/04). Shape: input = ColumnTranscript, expected = CorrectedEntry[] per spec 7. Scope: STRUCTURAL assertions only (line_indices grouping, field slotting, is_continuation, bracket/example classification, raw_ocr_snippet verbatim, drop rules). NOT asserting Farsi correctness (that is T4 ground truth). Line text from docs/01 + docs/03; truncated doc quotes used verbatim; word bboxes/confidences are plausible reconstructions. Consistency invariant: F6 expected = F3 entry + F1 entry deep-equal.",
+  "fixtures": [
+    {
+      "fixture_id": "F1-clean-entry",
+      "page": 7,
+      "column": "left",
+      "focus": "clean entry segmentation; headword -> Farsi -> definition slotting",
+      "note": "Abet entry, docs/03 left L10-L13. Definition line text truncated in doc ('To support or help...'); quoted prefix used.",
+      "input": {
+        "page_number": 7,
+        "column": "left",
+        "lines": [
+          {
+            "text": "Abet",
+            "script": "latin",
+            "yTop": 920,
+            "bbox": [190, 920, 60, 50],
+            "avgConfidence": 0.97,
+            "words": [{ "text": "Abet", "bbox": [190, 920, 60, 50], "languageCode": "en", "confidence": 0.97 }]
+          },
+          {
+            "text": "تشویق تحریک کردن",
+            "script": "farsi",
+            "yTop": 976,
+            "bbox": [700, 976, 290, 50],
+            "avgConfidence": 0.9,
+            "words": [
+              { "text": "تشویق", "bbox": [700, 976, 90, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "تحریک", "bbox": [800, 976, 100, 50], "languageCode": "fa", "confidence": 0.89 },
+              { "text": "کردن", "bbox": [910, 976, 80, 50], "languageCode": "fa", "confidence": 0.91 }
+            ]
+          },
+          {
+            "text": "جنایت",
+            "script": "farsi",
+            "yTop": 1046,
+            "bbox": [800, 1046, 90, 50],
+            "avgConfidence": 0.88,
+            "words": [{ "text": "جنایت", "bbox": [800, 1046, 90, 50], "languageCode": "fa", "confidence": 0.88 }]
+          },
+          {
+            "text": "To support or help",
+            "script": "latin",
+            "yTop": 1097,
+            "bbox": [190, 1097, 200, 50],
+            "avgConfidence": 0.945,
+            "words": [
+              { "text": "To", "bbox": [190, 1097, 25, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "support", "bbox": [225, 1097, 75, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "or", "bbox": [310, 1097, 25, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "help", "bbox": [345, 1097, 45, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "Abet",
+          "translation_fa": "تشویق تحریک کردن جنایت",
+          "definition_en": "To support or help",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "Abet تشویق تحریک کردن جنایت To support or help",
+          "line_indices": [0, 1, 2, 3]
+        }
+      ]
+    },
+    {
+      "fixture_id": "F2-runover",
+      "page": 7,
+      "column": "right",
+      "focus": "runover from prior page: is_continuation, empty headword, no invention; page-number line dropped",
+      "note": "docs/03 right R0-R2. R0 ', 7' page number -> dropped, never cited. R1+R2 = definition split across Y-gap reassembled (docs/03 6.2). R2 y approximated (doc shows only R1 y=299).",
+      "input": {
+        "page_number": 7,
+        "column": "right",
+        "lines": [
+          {
+            "text": ", 7",
+            "script": "other",
+            "yTop": 155,
+            "bbox": [990, 155, 40, 50],
+            "avgConfidence": 0.9,
+            "words": [
+              { "text": ",", "bbox": [990, 155, 15, 50], "languageCode": null, "confidence": 0.9 },
+              { "text": "7", "bbox": [1010, 155, 20, 50], "languageCode": null, "confidence": 0.9 }
+            ]
+          },
+          {
+            "text": "The offense of stealing or driving away cattle ,",
+            "script": "latin",
+            "yTop": 299,
+            "bbox": [990, 299, 510, 50],
+            "avgConfidence": 0.922,
+            "words": [
+              { "text": "The", "bbox": [990, 299, 40, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "offense", "bbox": [1040, 299, 70, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": "of", "bbox": [1120, 299, 25, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "stealing", "bbox": [1155, 299, 80, 50], "languageCode": "en", "confidence": 0.92 },
+              { "text": "or", "bbox": [1245, 299, 25, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": "driving", "bbox": [1280, 299, 65, 50], "languageCode": "en", "confidence": 0.91 },
+              { "text": "away", "bbox": [1355, 299, 50, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "cattle", "bbox": [1415, 299, 60, 50], "languageCode": "en", "confidence": 0.9 },
+              { "text": ",", "bbox": [1485, 299, 15, 50], "languageCode": "en", "confidence": 0.88 }
+            ]
+          },
+          {
+            "text": ".Cattle stealer",
+            "script": "latin",
+            "yTop": 360,
+            "bbox": [990, 360, 150, 50],
+            "avgConfidence": 0.845,
+            "words": [
+              { "text": ".Cattle", "bbox": [990, 360, 70, 50], "languageCode": "en", "confidence": 0.85 },
+              { "text": "stealer", "bbox": [1070, 360, 70, 50], "languageCode": "en", "confidence": 0.84 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "",
+          "translation_fa": "",
+          "definition_en": "The offense of stealing or driving away cattle , .Cattle stealer",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": true,
+          "raw_ocr_snippet": "The offense of stealing or driving away cattle , .Cattle stealer",
+          "line_indices": [1, 2]
+        }
+      ]
+    },
+    {
+      "fixture_id": "F3-multiline-crossref",
+      "page": 7,
+      "column": "left",
+      "focus": "multi-line cross-ref <...> joined into one span, brackets preserved, appended to definition_en; section header 'A' dropped; garbled tokens dropped from translation_fa",
+      "note": "Abduction entry, docs/03 left L0-L9. L0 'A' section header -> dropped. L8+L9 cross-ref pair (docs/03 6.3). L2 'jopa hups' unrecoverable -> dropped, not invented (anti-confabulation). Definition line texts truncated in doc; quoted prefixes used.",
+      "input": {
+        "page_number": 7,
+        "column": "left",
+        "lines": [
+          {
+            "text": "A",
+            "script": "other",
+            "yTop": 155,
+            "bbox": [500, 155, 40, 50],
+            "avgConfidence": 0.99,
+            "words": [{ "text": "A", "bbox": [500, 155, 40, 50], "languageCode": null, "confidence": 0.99 }]
+          },
+          {
+            "text": "Abduction",
+            "script": "latin",
+            "yTop": 300,
+            "bbox": [190, 300, 180, 50],
+            "avgConfidence": 0.98,
+            "words": [{ "text": "Abduction", "bbox": [190, 300, 180, 50], "languageCode": "en", "confidence": 0.98 }]
+          },
+          {
+            "text": "با jopa hups",
+            "script": "mixed",
+            "yTop": 356,
+            "bbox": [320, 356, 180, 50],
+            "avgConfidence": 0.687,
+            "words": [
+              { "text": "با", "bbox": [320, 356, 40, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "jopa", "bbox": [370, 356, 60, 50], "languageCode": "en", "confidence": 0.55 },
+              { "text": "hups", "bbox": [440, 356, 55, 50], "languageCode": "en", "confidence": 0.61 }
+            ]
+          },
+          {
+            "text": "اعمال زور یا فریب و با اغواء",
+            "script": "farsi",
+            "yTop": 421,
+            "bbox": [300, 421, 420, 50],
+            "avgConfidence": 0.886,
+            "words": [
+              { "text": "اعمال", "bbox": [300, 421, 70, 50], "languageCode": "fa", "confidence": 0.93 },
+              { "text": "زور", "bbox": [380, 421, 50, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "یا", "bbox": [440, 421, 40, 50], "languageCode": "fa", "confidence": 0.88 },
+              { "text": "فریب", "bbox": [490, 421, 60, 50], "languageCode": "fa", "confidence": 0.91 },
+              { "text": "و", "bbox": [560, 421, 30, 50], "languageCode": "fa", "confidence": 0.85 },
+              { "text": "با", "bbox": [600, 421, 40, 50], "languageCode": "fa", "confidence": 0.87 },
+              { "text": "اغواء", "bbox": [650, 421, 70, 50], "languageCode": "fa", "confidence": 0.86 }
+            ]
+          },
+          {
+            "text": "Kidnapping ; The action",
+            "script": "latin",
+            "yTop": 480,
+            "bbox": [190, 480, 280, 50],
+            "avgConfidence": 0.946,
+            "words": [
+              { "text": "Kidnapping", "bbox": [190, 480, 130, 50], "languageCode": "en", "confidence": 0.97 },
+              { "text": ";", "bbox": [330, 480, 15, 50], "languageCode": "en", "confidence": 0.9 },
+              { "text": "The", "bbox": [355, 480, 40, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "action", "bbox": [405, 480, 65, 50], "languageCode": "en", "confidence": 0.95 }
+            ]
+          },
+          {
+            "text": "someone away",
+            "script": "latin",
+            "yTop": 542,
+            "bbox": [190, 542, 150, 50],
+            "avgConfidence": 0.935,
+            "words": [
+              { "text": "someone", "bbox": [190, 542, 85, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "away", "bbox": [285, 542, 55, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          },
+          {
+            "text": "removal of a child",
+            "script": "latin",
+            "yTop": 607,
+            "bbox": [190, 607, 180, 50],
+            "avgConfidence": 0.935,
+            "words": [
+              { "text": "removal", "bbox": [190, 607, 85, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "of", "bbox": [285, 607, 25, 50], "languageCode": "en", "confidence": 0.92 },
+              { "text": "a", "bbox": [320, 607, 15, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "child", "bbox": [345, 607, 50, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          },
+          {
+            "text": "The unlawful carrying",
+            "script": "latin",
+            "yTop": 667,
+            "bbox": [190, 667, 220, 50],
+            "avgConfidence": 0.95,
+            "words": [
+              { "text": "The", "bbox": [190, 667, 40, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "unlawful", "bbox": [240, 667, 80, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "carrying", "bbox": [330, 667, 75, 50], "languageCode": "en", "confidence": 0.95 }
+            ]
+          },
+          {
+            "text": "< He is accused of",
+            "script": "latin",
+            "yTop": 733,
+            "bbox": [190, 733, 210, 50],
+            "avgConfidence": 0.9,
+            "words": [
+              { "text": "<", "bbox": [190, 733, 15, 50], "languageCode": "en", "confidence": 0.8 },
+              { "text": "He", "bbox": [215, 733, 30, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "is", "bbox": [255, 733, 20, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": "accused", "bbox": [285, 733, 75, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "of", "bbox": [370, 733, 25, 50], "languageCode": "en", "confidence": 0.92 }
+            ]
+          },
+          {
+            "text": "youngster . >",
+            "script": "latin",
+            "yTop": 800,
+            "bbox": [190, 800, 140, 50],
+            "avgConfidence": 0.87,
+            "words": [
+              { "text": "youngster", "bbox": [190, 800, 90, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": ".", "bbox": [290, 800, 15, 50], "languageCode": "en", "confidence": 0.88 },
+              { "text": ">", "bbox": [315, 800, 15, 50], "languageCode": "en", "confidence": 0.8 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "Abduction",
+          "translation_fa": "با اعمال زور یا فریب و با اغواء",
+          "definition_en": "Kidnapping ; The action someone away removal of a child The unlawful carrying < He is accused of youngster . >",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "Abduction با jopa hups اعمال زور یا فریب و با اغواء Kidnapping ; The action someone away removal of a child The unlawful carrying < He is accused of youngster . >",
+          "line_indices": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        }
+      ]
+    },
+    {
+      "fixture_id": "F4-mixed-bidi-example",
+      "page": 5,
+      "column": "left",
+      "focus": "mixed-bidi line reordering; مثال example span joined (marker preserved) and appended to definition_en; stray 'The' dropped; no confabulation",
+      "note": "Reconstructed from docs/01 B3 page-05 token stream: 'بهطریقاولیبهدلیلیمحکمتر/مستدلترTheمثال.With/foranevenstrongerreason'. Vision emitted this as a space-joined blob; line split (headword / Farsi equivalent / mixed example line) is an approximation. Slotting of example -> definition_en is PROVISIONAL (spec 04 section 2). 'The' = stray Latin token with no recoverable slot -> dropped (rule 5).",
+      "input": {
+        "page_number": 5,
+        "column": "left",
+        "lines": [
+          {
+            "text": "A fortiori",
+            "script": "latin",
+            "yTop": 300,
+            "bbox": [190, 300, 110, 50],
+            "avgConfidence": 0.965,
+            "words": [
+              { "text": "A", "bbox": [190, 300, 20, 50], "languageCode": "en", "confidence": 0.97 },
+              { "text": "fortiori", "bbox": [220, 300, 80, 50], "languageCode": "en", "confidence": 0.96 }
+            ]
+          },
+          {
+            "text": "به طریق اولی به دلیل محکمتر/مستدلتر",
+            "script": "farsi",
+            "yTop": 356,
+            "bbox": [560, 356, 410, 50],
+            "avgConfidence": 0.88,
+            "words": [
+              { "text": "به", "bbox": [560, 356, 40, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "طریق", "bbox": [610, 356, 60, 50], "languageCode": "fa", "confidence": 0.88 },
+              { "text": "اولی", "bbox": [680, 356, 50, 50], "languageCode": "fa", "confidence": 0.89 },
+              { "text": "به", "bbox": [740, 356, 40, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "دلیل", "bbox": [790, 356, 60, 50], "languageCode": "fa", "confidence": 0.87 },
+              { "text": "محکمتر/مستدلتر", "bbox": [860, 356, 110, 50], "languageCode": "fa", "confidence": 0.85 }
+            ]
+          },
+          {
+            "text": "به طریق اولی به دلیل محکمتر/مستدلتر The مثال With/for an even stronger reason",
+            "script": "mixed",
+            "yTop": 412,
+            "bbox": [180, 412, 900, 50],
+            "avgConfidence": 0.857,
+            "words": [
+              { "text": "به", "bbox": [180, 412, 40, 50], "languageCode": "fa", "confidence": 0.85 },
+              { "text": "طریق", "bbox": [230, 412, 60, 50], "languageCode": "fa", "confidence": 0.83 },
+              { "text": "اولی", "bbox": [300, 412, 50, 50], "languageCode": "fa", "confidence": 0.84 },
+              { "text": "به", "bbox": [360, 412, 40, 50], "languageCode": "fa", "confidence": 0.85 },
+              { "text": "دلیل", "bbox": [410, 412, 60, 50], "languageCode": "fa", "confidence": 0.82 },
+              { "text": "محکمتر/مستدلتر", "bbox": [480, 412, 110, 50], "languageCode": "fa", "confidence": 0.8 },
+              { "text": "The", "bbox": [600, 412, 40, 50], "languageCode": "en", "confidence": 0.9 },
+              { "text": "مثال", "bbox": [650, 412, 60, 50], "languageCode": "fa", "confidence": 0.88 },
+              { "text": "With/for", "bbox": [720, 412, 90, 50], "languageCode": "en", "confidence": 0.85 },
+              { "text": "an", "bbox": [820, 412, 30, 50], "languageCode": "en", "confidence": 0.88 },
+              { "text": "even", "bbox": [860, 412, 50, 50], "languageCode": "en", "confidence": 0.86 },
+              { "text": "stronger", "bbox": [920, 412, 80, 50], "languageCode": "en", "confidence": 0.87 },
+              { "text": "reason", "bbox": [1010, 412, 70, 50], "languageCode": "en", "confidence": 0.9 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "A fortiori",
+          "translation_fa": "به طریق اولی به دلیل محکمتر/مستدلتر",
+          "definition_en": "به طریق اولی به دلیل محکمتر/مستدلتر مثال With/for an even stronger reason",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "A fortiori به طریق اولی به دلیل محکمتر/مستدلتر به طریق اولی به دلیل محکمتر/مستدلتر The مثال With/for an even stronger reason",
+          "line_indices": [0, 1, 2]
+        }
+      ]
+    },
+    {
+      "fixture_id": "F5-garbled-ocr",
+      "page": 7,
+      "column": "left",
+      "focus": "garbled OCR anti-confabulation: jopa/hups dropped, never invented; recoverable Farsi kept; low-confidence garbage does not trigger field fabrication",
+      "note": "Abduction entry L0-L3 (docs/03). The 'jopa hups' tokens are real (docs/01 B3: 'jopahups' x=697 y=370). Expected translation_fa keeps only the recoverable 'با' + line 3; garbage tokens are dropped. Model must NOT 'fix' jopa/hups into plausible Farsi. Downstream looksSuspiciousFa/needs_review is validation's job, not the model's.",
+      "input": {
+        "page_number": 7,
+        "column": "left",
+        "lines": [
+          {
+            "text": "Abduction",
+            "script": "latin",
+            "yTop": 300,
+            "bbox": [190, 300, 180, 50],
+            "avgConfidence": 0.98,
+            "words": [{ "text": "Abduction", "bbox": [190, 300, 180, 50], "languageCode": "en", "confidence": 0.98 }]
+          },
+          {
+            "text": "با jopa hups",
+            "script": "mixed",
+            "yTop": 356,
+            "bbox": [320, 356, 180, 50],
+            "avgConfidence": 0.687,
+            "words": [
+              { "text": "با", "bbox": [320, 356, 40, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "jopa", "bbox": [370, 356, 60, 50], "languageCode": "en", "confidence": 0.55 },
+              { "text": "hups", "bbox": [440, 356, 55, 50], "languageCode": "en", "confidence": 0.61 }
+            ]
+          },
+          {
+            "text": "اعمال زور یا فریب و با اغواء",
+            "script": "farsi",
+            "yTop": 421,
+            "bbox": [300, 421, 420, 50],
+            "avgConfidence": 0.886,
+            "words": [
+              { "text": "اعمال", "bbox": [300, 421, 70, 50], "languageCode": "fa", "confidence": 0.93 },
+              { "text": "زور", "bbox": [380, 421, 50, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "یا", "bbox": [440, 421, 40, 50], "languageCode": "fa", "confidence": 0.88 },
+              { "text": "فریب", "bbox": [490, 421, 60, 50], "languageCode": "fa", "confidence": 0.91 },
+              { "text": "و", "bbox": [560, 421, 30, 50], "languageCode": "fa", "confidence": 0.85 },
+              { "text": "با", "bbox": [600, 421, 40, 50], "languageCode": "fa", "confidence": 0.87 },
+              { "text": "اغواء", "bbox": [650, 421, 70, 50], "languageCode": "fa", "confidence": 0.86 }
+            ]
+          },
+          {
+            "text": "Kidnapping ; The action",
+            "script": "latin",
+            "yTop": 480,
+            "bbox": [190, 480, 280, 50],
+            "avgConfidence": 0.946,
+            "words": [
+              { "text": "Kidnapping", "bbox": [190, 480, 130, 50], "languageCode": "en", "confidence": 0.97 },
+              { "text": ";", "bbox": [330, 480, 15, 50], "languageCode": "en", "confidence": 0.9 },
+              { "text": "The", "bbox": [355, 480, 40, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "action", "bbox": [405, 480, 65, 50], "languageCode": "en", "confidence": 0.95 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "Abduction",
+          "translation_fa": "با اعمال زور یا فریب و با اغواء",
+          "definition_en": "Kidnapping ; The action",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "Abduction با jopa hups اعمال زور یا فریب و با اغواء Kidnapping ; The action",
+          "line_indices": [0, 1, 2, 3]
+        }
+      ]
+    },
+    {
+      "fixture_id": "F6-multi-entry-segmentation",
+      "page": 7,
+      "column": "left",
+      "focus": "segmentation across consecutive entries: line_indices partition (no double-cite, no gap except dropped header), entry order preserved; consistency with F1 + F3",
+      "note": "Full docs/03 left L0-L13 = Abduction entry + Abet entry contiguous. Expected[0] deep-equals F3.expected[0]; expected[1] deep-equals F1.expected[0]. L0 'A' header dropped, never cited.",
+      "input": {
+        "page_number": 7,
+        "column": "left",
+        "lines": [
+          {
+            "text": "A",
+            "script": "other",
+            "yTop": 155,
+            "bbox": [500, 155, 40, 50],
+            "avgConfidence": 0.99,
+            "words": [{ "text": "A", "bbox": [500, 155, 40, 50], "languageCode": null, "confidence": 0.99 }]
+          },
+          {
+            "text": "Abduction",
+            "script": "latin",
+            "yTop": 300,
+            "bbox": [190, 300, 180, 50],
+            "avgConfidence": 0.98,
+            "words": [{ "text": "Abduction", "bbox": [190, 300, 180, 50], "languageCode": "en", "confidence": 0.98 }]
+          },
+          {
+            "text": "با jopa hups",
+            "script": "mixed",
+            "yTop": 356,
+            "bbox": [320, 356, 180, 50],
+            "avgConfidence": 0.687,
+            "words": [
+              { "text": "با", "bbox": [320, 356, 40, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "jopa", "bbox": [370, 356, 60, 50], "languageCode": "en", "confidence": 0.55 },
+              { "text": "hups", "bbox": [440, 356, 55, 50], "languageCode": "en", "confidence": 0.61 }
+            ]
+          },
+          {
+            "text": "اعمال زور یا فریب و با اغواء",
+            "script": "farsi",
+            "yTop": 421,
+            "bbox": [300, 421, 420, 50],
+            "avgConfidence": 0.886,
+            "words": [
+              { "text": "اعمال", "bbox": [300, 421, 70, 50], "languageCode": "fa", "confidence": 0.93 },
+              { "text": "زور", "bbox": [380, 421, 50, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "یا", "bbox": [440, 421, 40, 50], "languageCode": "fa", "confidence": 0.88 },
+              { "text": "فریب", "bbox": [490, 421, 60, 50], "languageCode": "fa", "confidence": 0.91 },
+              { "text": "و", "bbox": [560, 421, 30, 50], "languageCode": "fa", "confidence": 0.85 },
+              { "text": "با", "bbox": [600, 421, 40, 50], "languageCode": "fa", "confidence": 0.87 },
+              { "text": "اغواء", "bbox": [650, 421, 70, 50], "languageCode": "fa", "confidence": 0.86 }
+            ]
+          },
+          {
+            "text": "Kidnapping ; The action",
+            "script": "latin",
+            "yTop": 480,
+            "bbox": [190, 480, 280, 50],
+            "avgConfidence": 0.946,
+            "words": [
+              { "text": "Kidnapping", "bbox": [190, 480, 130, 50], "languageCode": "en", "confidence": 0.97 },
+              { "text": ";", "bbox": [330, 480, 15, 50], "languageCode": "en", "confidence": 0.9 },
+              { "text": "The", "bbox": [355, 480, 40, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "action", "bbox": [405, 480, 65, 50], "languageCode": "en", "confidence": 0.95 }
+            ]
+          },
+          {
+            "text": "someone away",
+            "script": "latin",
+            "yTop": 542,
+            "bbox": [190, 542, 150, 50],
+            "avgConfidence": 0.935,
+            "words": [
+              { "text": "someone", "bbox": [190, 542, 85, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "away", "bbox": [285, 542, 55, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          },
+          {
+            "text": "removal of a child",
+            "script": "latin",
+            "yTop": 607,
+            "bbox": [190, 607, 180, 50],
+            "avgConfidence": 0.935,
+            "words": [
+              { "text": "removal", "bbox": [190, 607, 85, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "of", "bbox": [285, 607, 25, 50], "languageCode": "en", "confidence": 0.92 },
+              { "text": "a", "bbox": [320, 607, 15, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "child", "bbox": [345, 607, 50, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          },
+          {
+            "text": "The unlawful carrying",
+            "script": "latin",
+            "yTop": 667,
+            "bbox": [190, 667, 220, 50],
+            "avgConfidence": 0.95,
+            "words": [
+              { "text": "The", "bbox": [190, 667, 40, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "unlawful", "bbox": [240, 667, 80, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "carrying", "bbox": [330, 667, 75, 50], "languageCode": "en", "confidence": 0.95 }
+            ]
+          },
+          {
+            "text": "< He is accused of",
+            "script": "latin",
+            "yTop": 733,
+            "bbox": [190, 733, 210, 50],
+            "avgConfidence": 0.9,
+            "words": [
+              { "text": "<", "bbox": [190, 733, 15, 50], "languageCode": "en", "confidence": 0.8 },
+              { "text": "He", "bbox": [215, 733, 30, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "is", "bbox": [255, 733, 20, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": "accused", "bbox": [285, 733, 75, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "of", "bbox": [370, 733, 25, 50], "languageCode": "en", "confidence": 0.92 }
+            ]
+          },
+          {
+            "text": "youngster . >",
+            "script": "latin",
+            "yTop": 800,
+            "bbox": [190, 800, 140, 50],
+            "avgConfidence": 0.87,
+            "words": [
+              { "text": "youngster", "bbox": [190, 800, 90, 50], "languageCode": "en", "confidence": 0.93 },
+              { "text": ".", "bbox": [290, 800, 15, 50], "languageCode": "en", "confidence": 0.88 },
+              { "text": ">", "bbox": [315, 800, 15, 50], "languageCode": "en", "confidence": 0.8 }
+            ]
+          },
+          {
+            "text": "Abet",
+            "script": "latin",
+            "yTop": 920,
+            "bbox": [190, 920, 60, 50],
+            "avgConfidence": 0.97,
+            "words": [{ "text": "Abet", "bbox": [190, 920, 60, 50], "languageCode": "en", "confidence": 0.97 }]
+          },
+          {
+            "text": "تشویق تحریک کردن",
+            "script": "farsi",
+            "yTop": 976,
+            "bbox": [700, 976, 290, 50],
+            "avgConfidence": 0.9,
+            "words": [
+              { "text": "تشویق", "bbox": [700, 976, 90, 50], "languageCode": "fa", "confidence": 0.9 },
+              { "text": "تحریک", "bbox": [800, 976, 100, 50], "languageCode": "fa", "confidence": 0.89 },
+              { "text": "کردن", "bbox": [910, 976, 80, 50], "languageCode": "fa", "confidence": 0.91 }
+            ]
+          },
+          {
+            "text": "جنایت",
+            "script": "farsi",
+            "yTop": 1046,
+            "bbox": [800, 1046, 90, 50],
+            "avgConfidence": 0.88,
+            "words": [{ "text": "جنایت", "bbox": [800, 1046, 90, 50], "languageCode": "fa", "confidence": 0.88 }]
+          },
+          {
+            "text": "To support or help",
+            "script": "latin",
+            "yTop": 1097,
+            "bbox": [190, 1097, 200, 50],
+            "avgConfidence": 0.945,
+            "words": [
+              { "text": "To", "bbox": [190, 1097, 25, 50], "languageCode": "en", "confidence": 0.96 },
+              { "text": "support", "bbox": [225, 1097, 75, 50], "languageCode": "en", "confidence": 0.94 },
+              { "text": "or", "bbox": [310, 1097, 25, 50], "languageCode": "en", "confidence": 0.95 },
+              { "text": "help", "bbox": [345, 1097, 45, 50], "languageCode": "en", "confidence": 0.93 }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "headword_en": "Abduction",
+          "translation_fa": "با اعمال زور یا فریب و با اغواء",
+          "definition_en": "Kidnapping ; The action someone away removal of a child The unlawful carrying < He is accused of youngster . >",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "Abduction با jopa hups اعمال زور یا فریب و با اغواء Kidnapping ; The action someone away removal of a child The unlawful carrying < He is accused of youngster . >",
+          "line_indices": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        },
+        {
+          "headword_en": "Abet",
+          "translation_fa": "تشویق تحریک کردن جنایت",
+          "definition_en": "To support or help",
+          "pronunciation": null,
+          "pos": null,
+          "is_continuation": false,
+          "raw_ocr_snippet": "Abet تشویق تحریک کردن جنایت To support or help",
+          "line_indices": [10, 11, 12, 13]
+        }
+      ]
+    }
+  ]
+}

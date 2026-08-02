@@ -1,4 +1,4 @@
-# Spec & Implementation Plan (v2)
+# Spec & Implementation Plan - v3
 
 *Single source of truth for what we're building and in what order. Reconciled with
 the working v2 codebase as of this session. Anything marked **[verify]** must be
@@ -57,7 +57,7 @@ full observability platform; corrective/self-RAG; named RAG metrics
 
 ```
 [lossless capture] → [Google Vision OCR] → data/output/*.json  (words + bbox + lang + conf)
-   → [parser: readVisionWords → column split @x=1100 → Y-group into lines → script-tag]   ← DETERMINISTIC
+   → [parser: readVisionWords → per-page column split (detectColumnSplitX) → Y-group into lines → script-tag]   ← DETERMINISTIC
    → [LLM corrector: segment lines into entries, fix OCR, resolve bidi]                    ← MODEL (config.ts)
    → [normalize (NFC + Arabic→Persian)] → [Zod Tier-1 + Tier-2] → [cross-record checks]
    → [Drizzle → Postgres] → [retrieval search API] → [UI + source-crop verify]
@@ -226,6 +226,7 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 |---|---|---|---|
 | **T0** | *(resolved)* thresholds are tunable consts in `src/eval/thresholds.ts`; the real decision is deferred to T5 — calibrate to the first measured baseline | 2 | consts file; calibration note after T5 |
 | **T1** | Run deterministic parser (`scripts/inspect.mjs`) on `06.json` & `07.json`; confirm column split, catch page-number blocks (`6/A`, `A,7`) and garbled tokens (`jopahups`) | 2 | pasted transcripts + anomaly list |
+| **T1b** → T1 | Replace hardcoded column split with per-page gutter detection (`detectColumnSplitX`), central-band guarded | 2 | I1–I4 invariants pass on 05/06/07; clean gutter + balanced columns per page |
 | **T2** | Design the correction/segmentation prompt (input = transcript, output = `CorrectedEntry[]` JSON); document it | 2 | prompt file + rationale |
 | **T3** → T2 | Implement the frontier API client in `corrector.ts` (OpenAI-compatible `fetch`, reads `config.ts`); test against `MockCorrector` first | 2 | `parsePage` runs end-to-end on 05 with `LLM_PROFILE=mock` then real; pasted output |
 | **T4** | Hand-key the ground-truth answer key for pages 05–07 (correct entries, fields) | 2 | committed `.json` answer key |
@@ -239,7 +240,7 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 | **T12** → T11 | Bidirectional UI + per-entry source crop | 4 | working app; **Phase-4 gate** |
 | **T13** (optional) → T12 | Layer 2 per RAG Quality Bar: instrument → triage → evals → hybrid/rerank | 5 | failure-mode table from traces; eval harness |
 
-**Immediate next:** T0 → T1 → (T2, T4 in parallel) → T3 → T5.
+**Recommended sequence** (dependency order, not a live status): T0 → T1/T1b → (T2, T4 in parallel) → T3 → T5.
 
 ---
 
@@ -253,6 +254,7 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 | 4 | Full page count & later-section layout consistency | ~430 pages [verify]; sample in T10 |
 | 5 | Backup mechanism (bucket vs drive) | pick in T7 |
 | 6 | `needs_review` acceptable rate | set in T10 |
+| 7 | Column-split method | RESOLVED: per-page `detectColumnSplitX` (largest central-band x-gap) replaces the hardcoded x≈1100 the guide assumed; pages are not consistently aligned (page 07 is ~120px left of 05/06). Verified on 05–07. |
 
 ---
 
