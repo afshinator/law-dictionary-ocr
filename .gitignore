@@ -1,3 +1,5 @@
+# No leading slash on purpose: these match at ANY depth (v2-old/node_modules,
+# v2-old/dist, any future nested packages). Do not anchor them to the root.
 node_modules/
 dist/
 .env
