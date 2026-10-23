@@ -53,7 +53,8 @@ describe("checkAlphabeticalContinuity", () => {
   });
 
   it("skips continuations: alphabetically-wrong continuation is NOT flagged", () => {
-    const entries = [mkEntry("abide"), mkEntry("abandon", true), mkEntry("abet")];
+    // "aardvark" sorts before "abandon"; without the skip it would be a violation
+    const entries = [mkEntry("abandon"), mkEntry("aardvark", true), mkEntry("abate")];
     assert.deepEqual(checkAlphabeticalContinuity(entries), []);
   });
 
