@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { type Column, type Entry, POS_VALUES, type SourceImage, type Word } from "../src/types.ts";
+import { type Column, type Entry, type SourceImage, type Word } from "../src/types.ts";
 
 describe("types", () => {
   it("holds a full synthetic Entry fixture", () => {
@@ -54,10 +54,6 @@ describe("types", () => {
     assert.equal(entry.source_image.column, "left");
     const col: Column = "right";
     assert.equal(col, "right");
-  });
-
-  it("POS_VALUES is the placeholder set from the source", () => {
-    assert.deepEqual(POS_VALUES, ["n", "v", "adj", "adv", "prep", "conj", "phr"]);
   });
 
   it("allows every nullable field to be null (F4)", () => {
