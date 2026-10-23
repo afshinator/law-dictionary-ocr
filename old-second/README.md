@@ -2,7 +2,7 @@
 
 English→Farsi legal dictionary digitization. Endgame is **retrieval, not
 fine-tuning** (guide §1–2). This is the fresh v2 scaffold; v1's OCR code and
-validated Vision JSON live in `v1-old/`.
+validated Vision JSON live in `old-first/`.
 
 ## Pipeline
 
@@ -36,7 +36,7 @@ src/
   validation/cross-record.ts alphabetical continuity, tolerates runover
   db/schema.ts           Drizzle table → drizzle-zod Tier-1 schema
   db/client.ts           lazy Postgres client
-  ocr/                   port Vision client from v1-old (see ocr/README.md)
+  ocr/                   port Vision client from old-first (see ocr/README.md)
 ```
 
 ## Setup

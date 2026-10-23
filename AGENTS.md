@@ -4,8 +4,8 @@ English→Farsi legal dictionary digitization. A ~430-page [verify] printed book
 verifiable lookup: English headword → Farsi equivalent + English definition, with the
 source-page crop visible per result.
 
-**Current state:** v3, starting from scratch. `v1-old/` and `v2-old/` are closed-out code
-archives, not live code — read `docs/07-legacy-status.md` before trusting anything in them.
+**Current state:** v3, starting from scratch. `old-first/` and `old-second/` are closed-out code
+archives, not live code — read `docs/01-legacy-status.md` before trusting anything in them.
 `docs/` holds the shared documentation: product definition, the digitization guide, and the
 v1/v2 verification records.
 

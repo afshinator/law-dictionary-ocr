@@ -1,11 +1,11 @@
-# No leading slash on purpose: these match at ANY depth (v2-old/node_modules,
-# v2-old/dist, any future nested packages). Do not anchor them to the root.
+# No leading slash on purpose: these match at ANY depth (old-second/node_modules,
+# old-second/dist, any future nested packages). Do not anchor them to the root.
 node_modules/
 dist/
 .env
 
 
-v1-old/gcp-key*.*
+old-first/gcp-key*.*
 
 # data/ holds the irreplaceable scans + Vision JSON.
 # It is gitignored (as in v1) so source images never hit the repo -- BUT

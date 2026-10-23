@@ -6,7 +6,7 @@
 >
 > **Regenerate before trusting:**
 > - `npm run build` → does it compile? (silent success = OK)
-> - `node scripts/inspect.mjs v1-old/data/output/05.json 5` → parser sane?
+> - `node scripts/inspect.mjs old-first/data/output/05.json 5` → parser sane?
 > - `git log --oneline -10` → what actually changed since this snapshot?
 >
 > Snapshot taken: after T2 (correction prompt + golden fixtures, independently verified). Now at T3 / T4.
@@ -34,7 +34,7 @@
   are the prompt + tests). Corrector throws for frontier/deepseek until wired.
   Needs from you: exact model id + API key.
 - Ground-truth answer key + accuracy harness (**T4**, **T5**) → the Phase-2 gate.
-- Vision OCR client ported from `v1-old/src` (**T6**).
+- Vision OCR client ported from `old-first/src` (**T6**).
 - Postgres stood up + migrated; inserts (**T9**).
 - Retrieval API (**T11**), UI (**T12**), any Layer 2 (**T13**).
 

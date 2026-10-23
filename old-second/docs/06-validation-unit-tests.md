@@ -99,7 +99,7 @@ Reconciled: 16 == 16.
 
 **F-C (NOTE, not a failure — per handoff):** the `<= 2` rule flags every legitimate 2-char Farsi equivalent (`با`, `ات` → suspicious). Intended-conservative per `refinements.ts` design; asserted as-is (test file comment references F-C). Pending human confirmation — this is a policy question for T4/T10, NOT a code bug in this task.
 
-**F-DATA (pre-existing, not this task):** `npm test` (existing `tests/test.ts`) still fails `ENOENT v1-old/data/output/05.json` — the Vision JSON data is absent from this machine (known blocker, data on other machine). Unrelated to this handoff; new suite has zero data dependency.
+**F-DATA (pre-existing, not this task):** `npm test` (existing `tests/test.ts`) still fails `ENOENT old-first/data/output/05.json` — the Vision JSON data is absent from this machine (known blocker, data on other machine). Unrelated to this handoff; new suite has zero data dependency.
 
 ## 7. PROPOSED (not done — scope wall)
 

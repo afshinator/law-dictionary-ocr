@@ -17,7 +17,7 @@ import {
 import { LOW_CONFIDENCE_WORD } from "../eval/thresholds.js";
 
 // --- Minimal view of the verified Vision DOCUMENT_TEXT_DETECTION shape ---
-// Confirmed against v1-old/data/output/05.json: top-level {pages, text};
+// Confirmed against old-first/data/output/05.json: top-level {pages, text};
 // pages[].blocks[].paragraphs[].words[].symbols[]; word text = concat symbols text;
 // bbox = boundingBox.vertices (pixel); languageCode under property.detectedLanguages.
 interface RawVertex { x?: number; y?: number }

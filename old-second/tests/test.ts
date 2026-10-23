@@ -38,9 +38,9 @@ function flattenCount(raw: unknown): number {
 // ---------- test pages ----------
 
 const pages = {
-  "05": "v1-old/data/output/05.json",
-  "06": "v1-old/data/output/06.json",
-  "07": "v1-old/data/output/07.json",
+  "05": "old-first/data/output/05.json",
+  "06": "old-first/data/output/06.json",
+  "07": "old-first/data/output/07.json",
 } as const;
 
 const BAND_HALF = 10;

@@ -1,11 +1,11 @@
 # 01 — Parser Recon: Page 05 Vision JSON Shape & Verification
 
 Date: 2026-07-28
-Source: v1-old/data/output/05.json
+Source: old-first/data/output/05.json
 
 ---
 
-## A1 — v1-old/data/output/
+## A1 — old-first/data/output/
 
 ```
 total 8680
@@ -282,7 +282,7 @@ Blocks often intermix Farsi and English text within a single block:
 
 ---
 
-## C1 — v1-old/package.json (verbatim)
+## C1 — old-first/package.json (verbatim)
 
 ```json
 {
@@ -314,7 +314,7 @@ Blocks often intermix Farsi and English text within a single block:
 
 ---
 
-## C2 — v1-old/tsconfig.json (verbatim)
+## C2 — old-first/tsconfig.json (verbatim)
 
 ```json
 {
@@ -378,7 +378,7 @@ Blocks often intermix Farsi and English text within a single block:
 ## C4 — `image-size` usage
 
 ```
-grep -rn "image-size" v1-old/src/ → exit 1 (ZERO matches)
+grep -rn "image-size" old-first/src/ → exit 1 (ZERO matches)
 ```
 
 Confirmed: `image-size` is listed in `package.json` dependencies but never imported in any source file. Cruft — safe to drop.
@@ -387,7 +387,7 @@ Confirmed: `image-size` is listed in `package.json` dependencies but never impor
 
 ## D1 — Full page-05 JSON
 
-File: `/project/law-dictionary-ocr/v1-old/data/output/05.json`
+File: `/project/law-dictionary-ocr/old-first/data/output/05.json`
 Size: 2,724,363 bytes, 82,517 lines
 Too large to inline (>80k lines). Path provided for direct access.
 

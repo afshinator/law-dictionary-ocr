@@ -231,7 +231,7 @@ Each unit is self-contained and names its acceptance + evidence. `→` marks dep
 | **T3** → T2 | Implement the frontier API client in `corrector.ts` (OpenAI-compatible `fetch`, reads `config.ts`); test against `MockCorrector` first | 2 | `parsePage` runs end-to-end on 05 with `LLM_PROFILE=mock` then real; pasted output |
 | **T4** | Hand-key the ground-truth answer key for pages 05–07 (correct entries, fields) | 2 | committed `.json` answer key |
 | **T5** → T3,T4 | Build the accuracy harness: `parsePage` vs answer key → entry-reconstruction accuracy + Persian CER | 2 | metrics report; **Phase-2 gate decision** |
-| **T6** | Port Vision OCR client from `v1-old/src` into `src/ocr/`; drop unused `image-size` | 3 | builds; runs on 1 page; diff |
+| **T6** | Port Vision OCR client from `old-first/src` into `src/ocr/`; drop unused `image-size` | 3 | builds; runs on 1 page; diff |
 | **T7** | Pick + prove backup mechanism for `data/`; execute it | 3 | evidence of durable copy |
 | **T8** | Fix capture: lossless 300–600 DPI, de-warp; re-scan existing 3 pages | 3 | sample lossless scans |
 | **T9** → T6 | Stand up Postgres (`pg_trgm`, `pgvector` ready); `drizzle-kit generate` + `migrate`; wire insert | 3 | migration applied; row inserted; count ties out |
