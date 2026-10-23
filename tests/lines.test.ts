@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { type Word, unionBbox } from "../src/parser/columns.ts";
+import { unionBbox, type Word } from "../src/parser/columns.ts";
 import { groupIntoLines } from "../src/parser/lines.ts";
 
 const mkWord = (
@@ -74,10 +74,7 @@ describe("groupIntoLines", () => {
   });
 
   it("tags mixed lines mixed and orders them LTR", () => {
-    const words = [
-      mkWord(300, 100, "ترک"),
-      mkWord(100, 100, "abandon"),
-    ];
+    const words = [mkWord(300, 100, "ترک"), mkWord(100, 100, "abandon")];
     const lines = groupIntoLines(words);
     assert.equal(lines.length, 1);
     const line = lines[0];

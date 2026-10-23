@@ -4,13 +4,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  FALLBACK_COLUMN_SPLIT_X,
-  type Word,
   assignColumn,
   bboxFromVertices,
   detectColumnSplitX,
+  FALLBACK_COLUMN_SPLIT_X,
   splitColumns,
   unionBbox,
+  type Word,
 } from "../src/parser/columns.ts";
 
 const mkWord = (x: number, y = 0, w = 50, h = 20, text = "w"): Word => ({
@@ -102,14 +102,26 @@ describe("splitColumns", () => {
   it("buckets words into left/right columns", () => {
     const words = [100, 200, 900, 1000].map((x) => mkWord(x));
     const { left, right } = splitColumns(words, 550);
-    assert.deepEqual(left.map((w) => w.bbox[0]), [100, 200]);
-    assert.deepEqual(right.map((w) => w.bbox[0]), [900, 1000]);
+    assert.deepEqual(
+      left.map((w) => w.bbox[0]),
+      [100, 200],
+    );
+    assert.deepEqual(
+      right.map((w) => w.bbox[0]),
+      [900, 1000],
+    );
   });
 
   it("defaults splitX to the detected gutter", () => {
     const words = [100, 200, 300, 800, 900].map((x) => mkWord(x));
     const { left, right } = splitColumns(words);
-    assert.deepEqual(left.map((w) => w.bbox[0]), [100, 200, 300]);
-    assert.deepEqual(right.map((w) => w.bbox[0]), [800, 900]);
+    assert.deepEqual(
+      left.map((w) => w.bbox[0]),
+      [100, 200, 300],
+    );
+    assert.deepEqual(
+      right.map((w) => w.bbox[0]),
+      [800, 900],
+    );
   });
 });

@@ -13,9 +13,7 @@ export interface Vertex {
 }
 
 /** Vision gives 4 (near-axis-aligned) vertices; take min/max for a robust box. */
-export function bboxFromVertices(
-  vertices: Vertex[] | undefined,
-): [number, number, number, number] {
+export function bboxFromVertices(vertices: Vertex[] | undefined): [number, number, number, number] {
   if (!vertices || vertices.length === 0) return [0, 0, 0, 0];
   const xs = vertices.map((v) => v.x ?? 0);
   const ys = vertices.map((v) => v.y ?? 0);
