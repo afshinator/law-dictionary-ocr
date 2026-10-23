@@ -8,6 +8,7 @@
       "!docs",
       "!old-first",
       "!old-second",
+      "!mypi-tasks",
       "!.fallowrc.json",
       "!package-lock.json"
     ]
