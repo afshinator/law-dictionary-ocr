@@ -1,0 +1,72 @@
+{
+  "version": "1",
+  "configHash": "13e847e8eb05ed26752d00837909d4050ab6b8645609097ec04305544db17c9c",
+  "planPointer": "run-details/plan.md",
+  "startedAtMs": 1792731483433,
+  "totals": {
+    "costUsd": 1.517217168,
+    "tokens": 9305294
+  },
+  "agents": [
+    {
+      "id": "geometry_engineer",
+      "state": "STOPPED",
+      "model": "fireworks/accounts/fireworks/models/glm-5p3",
+      "usage": {
+        "costUsd": 1.36387488,
+        "tokens": 3948399,
+        "cacheReadTokens": 3771198
+      },
+      "budget": {
+        "maxCostUsd": 1.5
+      },
+      "lastCompletedWorkOrder": "task-13",
+      "inFlightTaskId": null
+    },
+    {
+      "id": "validation_engineer",
+      "state": "DONE",
+      "model": "deepseek/deepseek-flash",
+      "usage": {
+        "costUsd": 0.11627552399999999,
+        "tokens": 4226852,
+        "cacheReadTokens": 4101504
+      },
+      "budget": {
+        "maxCostUsd": 1
+      },
+      "lastCompletedWorkOrder": "task-11",
+      "inFlightTaskId": null
+    },
+    {
+      "id": "test_verifier",
+      "state": "DONE",
+      "model": "deepseek/deepseek-flash",
+      "usage": {
+        "costUsd": 0.037066763999999995,
+        "tokens": 1130043,
+        "cacheReadTokens": 1068544
+      },
+      "budget": {
+        "maxCostUsd": 0.6
+      },
+      "lastCompletedWorkOrder": "task-14",
+      "inFlightTaskId": null
+    },
+    {
+      "id": "reviewer",
+      "state": "PENDING",
+      "model": "openai/gpt-6-luna",
+      "usage": {
+        "costUsd": 0,
+        "tokens": 0,
+        "cacheReadTokens": 0
+      },
+      "budget": {
+        "maxCostUsd": 0.5
+      },
+      "lastCompletedWorkOrder": null,
+      "inFlightTaskId": null
+    }
+  ]
+}
