@@ -32,18 +32,17 @@ verified; auth is not — there are no credentials on this machine.
 
 These exist because the project is as much a software-engineering exercise as a digitization
 effort. The layout must survive POC → MVP → R1.
-
 1. **One source of truth for values.** Policy numbers, identity content, model choice and
    paths live in `src/config/` or `src/content/` — nowhere else. No policy number appears
    inline in `src/`.
 2. **Policy vs algorithm vs content vs secret:**
-   - *Policy* (a gate the code enforces — 0.85 word confidence, 0.95 entry accuracy, 0.02
+   - _Policy_ (a gate the code enforces — 0.85 word confidence, 0.95 entry accuracy, 0.02
      CER) → `src/config/` as a TS const, so a wrong value fails a test, not a user.
-   - *Algorithm shape* (central band, line tolerance) → a named const local to its module.
-   - *Book assumptions* (fallback column split) → `src/config/geometry.ts`.
-   - *Content* a non-developer might edit (author name, title, credits, English + Farsi) →
+   - _Algorithm shape_ (central band, line tolerance) → a named const local to its module.
+   - _Book assumptions_ (fallback column split) → `src/config/geometry.ts`.
+   - _Content_ a non-developer might edit (author name, title, credits, English + Farsi) →
      `src/content/*.json` behind a zod-validated loader; never bilingual strings in code.
-   - *Secrets and environment* → env vars read in exactly one place per concern,
+   - _Secrets and environment_ → env vars read in exactly one place per concern,
      zod-validated with defaults, server-only. `.env` files stay at the repository root.
 3. **A config module lands only with its first consumer.** No speculative config, no dead
    exports.
