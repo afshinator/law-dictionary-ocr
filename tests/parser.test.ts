@@ -36,9 +36,7 @@ const vision = (words: ReturnType<typeof rawWord>[]) => ({
   pages: [{ blocks: [{ paragraphs: [{ words }] }] }],
 });
 
-const stub = (
-  byColumn: Partial<Record<"left" | "right", CorrectedEntry[]>>,
-): Corrector => ({
+const stub = (byColumn: Partial<Record<"left" | "right", CorrectedEntry[]>>): Corrector => ({
   structure: async (t) => byColumn[t.column] ?? [],
 });
 
@@ -72,10 +70,7 @@ describe("readVisionWords", () => {
   });
 
   it("skips words whose concatenated symbol text is empty", () => {
-    const raw = vision([
-      rawWord({ x: 10, y: 20, symbols: ["", ""] }),
-      rawWord({ x: 100, y: 20 }),
-    ]);
+    const raw = vision([rawWord({ x: 10, y: 20, symbols: ["", ""] }), rawWord({ x: 100, y: 20 })]);
     const words = readVisionWords(raw);
     assert.deepEqual(
       words.map((w) => w.text),
@@ -141,11 +136,7 @@ describe("parsePage", () => {
 
   it("flags a Latin translation_fa (Tier-2 farsiFieldSchema failure)", async () => {
     const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
-    const entries = await parsePage(
-      raw,
-      5,
-      stub({ left: [ce({ translation_fa: "latinword" })] }),
-    );
+    const entries = await parsePage(raw, 5, stub({ left: [ce({ translation_fa: "latinword" })] }));
     assert.equal(entries[0]?.needs_review, true);
   });
 

@@ -44,9 +44,3 @@ export interface Word {
   languageCode: string | null;
   confidence: number | null;
 }
-
-// TODO [verify]: the real POS abbreviation set must be derived from the actual
-// dictionary's front-matter key, NOT invented here. These are placeholders so the
-// Tier-1 enum has something to check; replace once the corpus is sampled (docs 13.5).
-export const POS_VALUES = ["n", "v", "adj", "adv", "prep", "conj", "phr"] as const;
-export type Pos = (typeof POS_VALUES)[number];
