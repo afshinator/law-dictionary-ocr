@@ -1,14 +1,17 @@
-# No leading slash on purpose: these match at ANY depth (old-second/node_modules,
-# old-second/dist, any future nested packages). Do not anchor them to the root.
+# No leading slash on purpose: these match at ANY depth, including old-first/ and
+# old-second/. Do not anchor them to the root.
 node_modules/
 dist/
 .env
 
 
 old-first/gcp-key*.*
+old-second/gcp-key*.*
+**/gcp-key*.json
 
 # data/ holds the irreplaceable scans + Vision JSON.
 # It is gitignored (as in v1) so source images never hit the repo -- BUT
 # "untracked" is NOT "backed up". Per docs 6 and 12: back data/ up to durable
 # storage (cloud bucket / external drive) separately. This line is a risk, not a plan.
 data/
+.fallow/
