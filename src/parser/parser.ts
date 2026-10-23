@@ -110,7 +110,7 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
   const translation_fa = normalizeFa(ce.translation_fa);
 
   const entry: Entry = {
-    entry_id: `${pageNumber}-${transcript.column}-${ce.line_indices[0] ?? 0}`,
+    entry_id: `${pageNumber}-${transcript.column}-${ce.line_indices[0] ?? 0}`, // shortcut: entry_id collides on empty/duplicate first line_indices; fix in the id/DB ticket
     headword_en: ce.headword_en,
     headword_normalized: ce.headword_en.toLowerCase().trim(),
     pronunciation: ce.pronunciation,

@@ -83,6 +83,30 @@ describe("readVisionWords", () => {
     assert.throws(() => readVisionWords({ text: "full text only" }));
     assert.throws(() => readVisionWords(null));
   });
+
+  it("tolerates missing optional arrays and a missing boundingBox (F7)", () => {
+    const raw = {
+      pages: [
+        {}, // page without blocks
+        {
+          blocks: [
+            {}, // block without paragraphs
+            { paragraphs: [{}] }, // paragraph without words
+            {
+              paragraphs: [
+                { words: [{ symbols: [{ text: "ok" }] }] }, // no boundingBox
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const words = readVisionWords(raw);
+    assert.deepEqual(
+      words.map((w) => [w.text, w.bbox]),
+      [["ok", [0, 0, 0, 0]]],
+    );
+  });
 });
 
 describe("buildColumnTranscripts", () => {
@@ -121,7 +145,22 @@ describe("parsePage", () => {
       rawWord({ x: 100, y: 200, conf: 0.97 }),
       rawWord({ x: 110, y: 200, conf: 0.97 }),
     ]);
-    const entries = await parsePage(raw, 5, stub({ left: [ce({ line_indices: [0, 1] })] }));
+    const entries = await parsePage(
+      raw,
+      5,
+      stub({
+        left: [
+          ce({
+            line_indices: [0, 1],
+            pronunciation: "əˈbændən",
+            pos: "adv",
+            definition_en: "Custom definition.",
+            raw_ocr_snippet: "raw Abandon line",
+            is_continuation: true,
+          }),
+        ],
+      }),
+    );
     assert.equal(entries.length, 1);
     const e = entries[0];
     assert.equal(e?.entry_id, "5-left-0");
@@ -132,6 +171,12 @@ describe("parsePage", () => {
     assert.deepEqual(e?.source_image.bbox, [100, 100, 36, 120]);
     assert.equal(e?.confidence, 0.97);
     assert.equal(e?.needs_review, false);
+    // pass-through fields (F3): corrector values land unmodified in the Entry
+    assert.equal(e?.pronunciation, "əˈbændən");
+    assert.equal(e?.pos, "adv");
+    assert.equal(e?.definition_en, "Custom definition.");
+    assert.equal(e?.raw_ocr_snippet, "raw Abandon line");
+    assert.equal(e?.is_continuation, true);
   });
 
   it("flags a Latin translation_fa (Tier-2 farsiFieldSchema failure)", async () => {
@@ -140,8 +185,31 @@ describe("parsePage", () => {
     assert.equal(entries[0]?.needs_review, true);
   });
 
+  it("flags a digits-only translation_fa (F1: farsiFieldSchema fails, looksSuspiciousFa passes)", async () => {
+    // "1234": no Arabic script -> farsiFieldSchema fails; 4 chars, no Latin ->
+    // looksSuspiciousFa false. Only the !farsiOk || mutant dies here.
+    const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
+    const entries = await parsePage(raw, 5, stub({ left: [ce({ translation_fa: "1234" })] }));
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
+  it("flags a Farsi headword_en (F2: englishHeadwordSchema failure only)", async () => {
+    const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
+    const entries = await parsePage(raw, 5, stub({ left: [ce({ headword_en: "ترک" })] }));
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
+  it("flags a Tier-1 structural failure (F2: malformed CorrectedEntry)", async () => {
+    const bad = { ...ce(), pronunciation: 42 } as unknown as CorrectedEntry;
+    const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
+    const entries = await parsePage(raw, 5, stub({ left: [bad] }));
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
   it("T-FIX1: mean clears the threshold but a single 0.55 word still flags", async () => {
-    // one cited line, 4 words: 0.55, 0.97, 0.97, 0.97 -> line/entry mean 0.865
+    // one cited line, 4 words: 0.55, 0.97, 0.97, 0.97 -> line/entry mean 0.865.
+    // F4: literals are fixed to the 0.85-era semantics on purpose -- if T5
+    // re-ratifies LOW_CONFIDENCE_WORD this fails loudly and must be recalibrated.
     const raw = vision([
       rawWord({ x: 100, y: 100, conf: 0.55 }),
       rawWord({ x: 110, y: 100, conf: 0.97 }),
@@ -172,5 +240,22 @@ describe("parsePage", () => {
     const entries = await parsePage(raw, 5, stub({ left: [ce()] }));
     assert.equal(entries[0]?.confidence, null);
     assert.equal(entries[0]?.needs_review, false);
+  });
+
+  it("accumulates entries from both columns, keyed per column (F7)", async () => {
+    const raw = vision([
+      rawWord({ x: 100, y: 100, conf: 0.97 }),
+      rawWord({ x: 500, y: 100, conf: 0.97 }),
+    ]);
+    const entries = await parsePage(
+      raw,
+      5,
+      stub({ left: [ce()], right: [ce({ headword_en: "Abate" })] }),
+    );
+    assert.deepEqual(
+      entries.map((e) => e.entry_id),
+      ["5-left-0", "5-right-0"],
+    );
+    assert.equal(entries[1]?.headword_normalized, "abate");
   });
 });
