@@ -102,4 +102,34 @@ describe("groupIntoLines", () => {
   it("returns [] for an empty column", () => {
     assert.deepEqual(groupIntoLines([]), []);
   });
+
+  it("averages a numeric 0 confidence (F1: 0 is a real value, not missing)", () => {
+    // single 0-confidence word -> avg 0, not null
+    const solo = [mkWord(100, 100, "a", 50, 20, 0)];
+    assert.equal(groupIntoLines(solo)[0]?.avgConfidence, 0);
+    // 0 + null -> avg of the numeric ones = 0
+    const mixed = [mkWord(100, 100, "a", 50, 20, 0), mkWord(200, 100, "b", 50, 20, null)];
+    assert.equal(groupIntoLines(mixed)[0]?.avgConfidence, 0);
+  });
+
+  it("tags digit-only lines other and pure-Latin lines latin (F3)", () => {
+    assert.equal(groupIntoLines([mkWord(100, 100, "123")])[0]?.script, "other");
+    assert.equal(groupIntoLines([mkWord(100, 100, "abandon")])[0]?.script, "latin");
+  });
+
+  it("applies the tol floor of 6 when median/2 is smaller (F7)", () => {
+    // h=4 -> median/2 = 2, but tol floors at 6; centers 102 vs 108 merge only
+    // because of the floor
+    const words = [mkWord(100, 100, "a", 50, 4), mkWord(200, 106, "b", 50, 4)];
+    const lines = groupIntoLines(words);
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0]?.text, "a b");
+  });
+
+  it("does not mutate the input array (F8)", () => {
+    const words = [mkWord(200, 200, "late"), mkWord(100, 100, "early"), mkWord(300, 100, "mid")];
+    const before = [...words];
+    groupIntoLines(words);
+    assert.deepEqual(words, before);
+  });
 });

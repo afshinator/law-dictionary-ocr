@@ -91,6 +91,13 @@ describe("detectColumnSplitX", () => {
 });
 
 describe("assignColumn", () => {
+  it("ties equal central gaps to the lowest midpoint (F6: strict `>` keeps the first)", () => {
+    // xs [100,500,900]: two equal 400px gaps, mids 300 and 700, both in the
+    // central band [260, 740]; the loop's strict > never replaces the first.
+    const words = [100, 500, 900].map((x) => mkWord(x));
+    assert.equal(detectColumnSplitX(words), 300);
+  });
+
   it("splits at the boundary: left when x < splitX, right otherwise", () => {
     assert.equal(assignColumn(mkWord(799), 800), "left");
     assert.equal(assignColumn(mkWord(800), 800), "right");

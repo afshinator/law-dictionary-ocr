@@ -59,4 +59,26 @@ describe("types", () => {
   it("POS_VALUES is the placeholder set from the source", () => {
     assert.deepEqual(POS_VALUES, ["n", "v", "adj", "adv", "prep", "conj", "phr"]);
   });
+
+  it("allows every nullable field to be null (F4)", () => {
+    const entry: Entry = {
+      entry_id: "p05-r-0002",
+      headword_en: "ad hoc",
+      headword_normalized: "ad hoc",
+      pronunciation: null,
+      pos: null,
+      translation_fa: "خصوصی",
+      definition_en: null,
+      raw_ocr_snippet: "ad hoc خصوصی",
+      source_image: { page_number: 5, column: "right", bbox: [10, 20, 30, 40] },
+      is_continuation: true,
+      needs_review: true,
+      confidence: null,
+    };
+    assert.equal(entry.pronunciation, null);
+    assert.equal(entry.pos, null);
+    assert.equal(entry.definition_en, null);
+    assert.equal(entry.confidence, null);
+    assert.equal(Object.keys(entry).length, 12);
+  });
 });
