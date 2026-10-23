@@ -20,7 +20,7 @@ The three primary outputs are the Persian equivalent, English definition, and sc
 
 - One combined search field covering exact/prefix English headwords, fuzzy English headwords, and Persian equivalent keyword search.
 
-- Question-in-a-sentence and chat behavior are out of scope until separately decided. Do not imply they are supported.
+- Question-in-a-sentence and chat behavior are out of scope (decided). Do not imply they are supported.
 
 - Author’s name belongs in the app’s full title and is described on an About page. Exact author name, preferred spelling, book title and bibliographic data are not yet provided. Use placeholders until confirmed.
 
@@ -69,7 +69,7 @@ Do not treat these values as an instruction to re-style the mock. The visual ima
 | S3 · Entry detail   | Back-to-results, headword/POS/pronunciation, Persian equivalent, English definition, internal cross-references, visible source panel with zoom/context and page ID.              |
 | S4 · About          | Author attribution and book information, what was digitized, transcription/source limitations, relevant acknowledgments and contact/copyright details.                           |
 
-A–Z browsing does not need its own v1 screen. Clicking a letter opens the standard results view filtered by that initial. The maintainer review interface is a distinct internal workflow and is not part of the public screen inventory.
+A–Z browsing does not need its own R1 screen. Clicking a letter opens the standard results view filtered by that initial. The maintainer review interface is a distinct internal workflow and is not part of the public screen inventory.
 
 Suggested routes (not implementation contracts): /, /search?q=..., /entry/:id, /about. Preserve the search query and prior list scroll position when returning from an entry.
 
@@ -162,7 +162,7 @@ Assemble and display full content as one coherent entry. In the source panel, in
 
 ## 8.5 Review flags
 
-needs_review does not automatically mean “unverified book content”; it concerns the extracted transcription. When the flag indicates a realistic transcription error risk, show a restrained notice near the crop: “Source transcription not yet verified.” Maintainers get separate flag state, extraction confidence where available, edit and mark-verified tools. Review UI is not part of the public detail view.
+needs_review is an internal extraction-QA flag; users never see it. Flagged entries are excluded from public search until human-reviewed, so no end-user notice exists. Maintainers get separate flag state, extraction confidence where available, edit and mark-verified tools. Review UI is not part of the public detail view.
 
 ## 8.6 No results and ambiguity
 
@@ -179,7 +179,7 @@ Distinguish “term not explicitly in this dictionary” from “nothing remotel
 | pronunciation   | Optional secondary headword metadata; omit gracefully when absent                     |
 | source_image    | Target crop, page identifier and entry highlight; full-page context                   |
 | is_continuation | Provenance annotation and multiple crop composition                                   |
-| needs_review    | Conditional low-key end-user transcription notice; prominent maintainer flag          |
+| needs_review    | Internal only; excluded from public search until reviewed; prominent maintainer flag          |
 
 Cross-references like “see also X” remain inside the parent entry and become internal links only when the target is identifiable. Persian example sentences embedded in the definition are not separate search results or records.
 
@@ -219,7 +219,7 @@ The cover/app heading and the About page should not assume that the dictionary a
 | Persian detection    | Searching Persian equivalents                                                      |
 | Fuzzy-only           | No exact entry for “abte” · Closest entries                                        |
 | No candidates        | No dictionary entry found for “\[query\]”. Try a shorter term or another spelling. |
-| Review flag          | Source transcription not yet verified                                              |
+| Review flag          | (internal — not shown to end users)                                              |
 | Spanning entry       | Source spans pages \[N\]–\[N+1\]                                                   |
 | Prior page start     | Entry begins on previous page                                                      |
 | Source heading       | Source — page \[N\]                                                                |
@@ -229,7 +229,7 @@ The cover/app heading and the About page should not assume that the dictionary a
 
 Risks to verify with real records: multiple senses and extraction duplicates; cross-reference resolution; Persian normalization; scan resolution and legibility; long English definitions with embedded Persian; multi-crop continuations; distinction between book authority and a digitized transcription.
 
-Explicit v1 non-goals: translation of missing headwords, chatbot Q&A, generated legal advice, mandatory advanced-search tabs, separate browse page, and user-facing OCR/debug controls.
+Explicit R1 non-goals: translation of missing headwords, chatbot Q&A, generated legal advice, mandatory advanced-search tabs, separate browse page, and user-facing OCR/debug controls.
 
 Design acceptance checks:
 
@@ -255,7 +255,7 @@ Design acceptance checks:
 | Q2  | Original book title, publisher, edition, publication year, ISBN and rights/permission wording.           |
 | Q3  | Approved About-page biography, editor/digitization credits and contact/ownership copy.                   |
 | Q4  | Representative real scanned pages and crops including two-column entries and page-spanning continuation. |
-| Q5  | Confirmation of whether needs_review reflects OCR/extraction uncertainty or a stricter QA state.         |
+| Q5  | RESOLVED — needs_review is an internal extraction-QA flag; users never see it; flagged entries excluded until reviewed. |
 
 # Appendix A — approved visual reference
 
