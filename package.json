@@ -19,6 +19,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@google-cloud/vision": "^6.2.0"
+    "@google-cloud/vision": "^6.2.0",
+    "zod": "^4.6.7"
   }
 }
