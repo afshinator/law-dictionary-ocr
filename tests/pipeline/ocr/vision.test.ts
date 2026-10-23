@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 
-import { LANGUAGE_HINTS, performOCR, type VisionClient } from "../src/ocr/vision.ts";
+import { LANGUAGE_HINTS, performOCR, type VisionClient } from "../../../src/pipeline/ocr/vision.ts";
 
 const tmp = mkdtempSync(join(tmpdir(), "vision-test-"));
 const imagePath = join(tmp, "p001-left.png");

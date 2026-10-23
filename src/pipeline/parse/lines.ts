@@ -4,9 +4,9 @@
 // consumes to segment entries and slot fields -- the LLM does the "residue"
 // (headword vs runover vs cross-ref vs example), not this code (docs 3).
 
-import { isFarsiOnly, isLatinOnly } from "../script.ts";
-import type { Column } from "../types.ts";
-import { unionBbox, type Word } from "./columns.ts";
+import { isFarsiOnly, isLatinOnly } from "../../domain/script.ts";
+import type { Column, Word } from "../../domain/types.ts";
+import { unionBbox } from "./columns.ts";
 
 export type LineScript = "latin" | "farsi" | "mixed" | "other";
 

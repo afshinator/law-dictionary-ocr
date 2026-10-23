@@ -3,17 +3,17 @@
 // The only pending piece is the injected Corrector (llm/corrector.ts), whose model
 // is undecided (docs 13.4) -- it segments the transcript into entries and corrects
 // OCR. buildColumnTranscripts() is independently testable WITHOUT any LLM.
-import { LOW_CONFIDENCE_WORD } from "../eval/thresholds.ts";
-import type { CorrectedEntry, Corrector } from "../llm/corrector.ts";
-import type { Entry } from "../types.ts";
-import { insertEntrySchema } from "../validation/entry-schema.ts";
-import { normalizeFa } from "../validation/normalize.ts";
+import { LOW_CONFIDENCE_WORD } from "../../config/thresholds.ts";
+import type { Entry, Word } from "../../domain/types.ts";
+import type { CorrectedEntry, Corrector } from "../correct/corrector.ts";
+import { insertEntrySchema } from "../validate/entry-schema.ts";
+import { normalizeFa } from "../validate/normalize.ts";
 import {
   englishHeadwordSchema,
   farsiFieldSchema,
   looksSuspiciousFa,
-} from "../validation/refinements.ts";
-import { bboxFromVertices, splitColumns, unionBbox, type Word } from "./columns.ts";
+} from "../validate/refinements.ts";
+import { bboxFromVertices, splitColumns, unionBbox } from "./columns.ts";
 import { type ColumnTranscript, groupIntoLines } from "./lines.ts";
 
 // --- Minimal view of the verified Vision DOCUMENT_TEXT_DETECTION shape ---

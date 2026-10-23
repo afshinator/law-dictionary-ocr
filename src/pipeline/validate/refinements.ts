@@ -3,7 +3,7 @@
 // language check here, because Vision mis-tags English as Latin/Italian/French so
 // languageCode cannot be trusted.
 import { z } from "zod";
-import { hasLatinLetters, isFarsiOnly, isLatinOnly } from "../script.ts";
+import { hasLatinLetters, isFarsiOnly, isLatinOnly } from "../../domain/script.ts";
 
 /** translation_fa must be Arabic-script with no Latin letters (catches the most
  *  common column-swap error: a Latin word landing in the Farsi field). */

@@ -3,7 +3,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { hasArabicScript, hasLatinLetters, isFarsiOnly, isLatinOnly } from "../src/script.ts";
+import {
+  hasArabicScript,
+  hasLatinLetters,
+  isFarsiOnly,
+  isLatinOnly,
+} from "../../src/domain/script.ts";
 
 describe("script detection", () => {
   it("hasArabicScript / hasLatinLetters", () => {

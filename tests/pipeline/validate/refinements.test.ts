@@ -7,7 +7,7 @@ import {
   englishHeadwordSchema,
   farsiFieldSchema,
   looksSuspiciousFa,
-} from "../src/validation/refinements.ts";
+} from "../../../src/pipeline/validate/refinements.ts";
 
 const firstMessage = (r: { error?: { issues: Array<{ message: string }> } }): string =>
   r.error?.issues[0]?.message ?? "";

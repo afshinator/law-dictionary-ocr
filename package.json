@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test \"tests/**/*.test.ts\"",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "health": "fallow dead-code --format json --quiet"

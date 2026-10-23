@@ -3,9 +3,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { LOW_CONFIDENCE_WORD } from "../src/eval/thresholds.ts";
-import type { CorrectedEntry, Corrector } from "../src/llm/corrector.ts";
-import { buildColumnTranscripts, parsePage, readVisionWords } from "../src/parser/parser.ts";
+import { LOW_CONFIDENCE_WORD } from "../../../src/config/thresholds.ts";
+import type { CorrectedEntry, Corrector } from "../../../src/pipeline/correct/corrector.ts";
+import {
+  buildColumnTranscripts,
+  parsePage,
+  readVisionWords,
+} from "../../../src/pipeline/parse/parser.ts";
 
 // --- inline raw Vision JSON builders (pages -> blocks -> paragraphs -> words -> symbols) ---
 const rawWord = (opts: {

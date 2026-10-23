@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { insertEntrySchema } from "../src/validation/entry-schema.ts";
+import { insertEntrySchema } from "../../../src/pipeline/validate/entry-schema.ts";
 
 const validEntry = () => ({
   entry_id: "p05-l-0001",

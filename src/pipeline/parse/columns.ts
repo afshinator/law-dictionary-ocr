@@ -1,11 +1,8 @@
 // Deterministic column + geometry logic (docs 5 steps 1-2). Implementable straight
 // from the guide's coordinates + the verified Vision shape; no LLM. Blocks are
 // ignored entirely -- we reconstruct from words + coordinates.
-import type { Column, Word } from "../types.ts";
-
-// Divergence D2: Word lives in types.ts (source: here) so types.ts exports the
-// shape the DoD requires; re-exported below for the source's import sites.
-export type { Word };
+import { FALLBACK_COLUMN_SPLIT_X } from "../../config/geometry.ts";
+import type { Column, Word } from "../../domain/types.ts";
 
 export interface Vertex {
   x?: number;
@@ -43,7 +40,6 @@ export function unionBbox(
 // pages are not consistently aligned -- e.g. page 07 is shifted ~120px vs 05/06, so
 // a single hardcoded split miscategorizes a whole column. This value is used only
 // when dynamic detection can't find a confident gap.
-export const FALLBACK_COLUMN_SPLIT_X = 1100;
 
 const leftEdge = (w: Word): number => w.bbox[0];
 

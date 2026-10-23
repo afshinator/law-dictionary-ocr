@@ -3,15 +3,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { FALLBACK_COLUMN_SPLIT_X } from "../../../src/config/geometry.ts";
+import type { Word } from "../../../src/domain/types.ts";
 import {
   assignColumn,
   bboxFromVertices,
   detectColumnSplitX,
-  FALLBACK_COLUMN_SPLIT_X,
   splitColumns,
   unionBbox,
-  type Word,
-} from "../src/parser/columns.ts";
+} from "../../../src/pipeline/parse/columns.ts";
 
 const mkWord = (x: number, y = 0, w = 50, h = 20, text = "w"): Word => ({
   text,

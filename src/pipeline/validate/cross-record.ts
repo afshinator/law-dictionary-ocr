@@ -1,7 +1,7 @@
 // Cross-record invariants run OUTSIDE Zod (Zod validates one record at a time,
 // docs 9). The key check is alphabetical-order continuity across the corpus
 // (docs 6), which MUST tolerate runover continuations.
-import type { Entry } from "../types.ts";
+import type { Entry } from "../../domain/types.ts";
 
 export interface OrderViolation {
   index: number;

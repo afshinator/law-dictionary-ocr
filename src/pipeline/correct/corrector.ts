@@ -3,7 +3,7 @@
 // passes the same Zod + cross-record gate.
 // Divergence D3: interfaces only here; the implementation (MockCorrector, config,
 // API client) is the later corrector ticket. Field names verbatim from the source.
-import type { ColumnTranscript } from "../parser/lines.ts";
+import type { ColumnTranscript } from "../parse/lines.ts";
 
 /** What the LLM emits per entry. line_indices point back into the transcript's
  *  lines so the parser can recover the source-image bbox + confidence. */

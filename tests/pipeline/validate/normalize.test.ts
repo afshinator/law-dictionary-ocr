@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { normalizeFa } from "../src/validation/normalize.ts";
+import { normalizeFa } from "../../../src/pipeline/validate/normalize.ts";
 
 describe("normalizeFa", () => {
   it("maps Arabic yeh U+064A to Persian yeh U+06CC", () => {

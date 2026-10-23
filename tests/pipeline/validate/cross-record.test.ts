@@ -3,8 +3,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import type { Entry } from "../src/types.ts";
-import { checkAlphabeticalContinuity } from "../src/validation/cross-record.ts";
+import type { Entry } from "../../../src/domain/types.ts";
+import { checkAlphabeticalContinuity } from "../../../src/pipeline/validate/cross-record.ts";
 
 const mkEntry = (headword_normalized: string, is_continuation = false): Entry => ({
   entry_id: `p05-l-${headword_normalized}`,

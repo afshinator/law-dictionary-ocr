@@ -4,7 +4,7 @@
 // semantics: notNull -> required non-nullable; notNull+default -> optional;
 // no notNull -> optional + nullable. Keys are the contract's snake_case (§4).
 import { z } from "zod";
-import type { SourceImage } from "../types.ts";
+import type { SourceImage } from "../../domain/types.ts";
 
 // Typed against the contract shape so field/type drift from types.ts fails to compile.
 // Stricter than the dropped jsonb column, which drizzle-zod typed as `unknown`.

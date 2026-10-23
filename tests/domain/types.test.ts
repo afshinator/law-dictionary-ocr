@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import type { Column, Entry, SourceImage, Word } from "../src/types.ts";
+import type { Column, Entry, SourceImage, Word } from "../../src/domain/types.ts";
 
 describe("types", () => {
   it("holds a full synthetic Entry fixture", () => {
