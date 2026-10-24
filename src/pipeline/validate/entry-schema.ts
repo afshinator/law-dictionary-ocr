@@ -19,6 +19,7 @@ const sourceImageSchema: z.ZodType<SourceImage> = z.object({
 // and the real POS set is [verify] (D9).
 export const insertEntrySchema = z.object({
   entry_id: z.string(),
+  first_line_index: z.number().int().nonnegative(),
   headword_en: z.string(),
   headword_normalized: z.string(),
   pronunciation: z.string().optional().nullable(),

@@ -14,6 +14,8 @@ export interface SourceImage {
 
 export interface Entry {
   entry_id: string;
+  /** index of the first cited transcript line (entry start), for E2 segmentation */
+  first_line_index: number;
   headword_en: string;
   /** lowercased/stripped, for exact + prefix search */
   headword_normalized: string;

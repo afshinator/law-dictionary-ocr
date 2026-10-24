@@ -14,6 +14,9 @@ type FetchImpl = (
   init: { method: string; headers: Record<string, string>; body: string },
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
 
+/** Max chars of bad model output kept in an error message (algorithm shape, not policy). */
+const ERROR_SNIPPET_MAX = 120;
+
 export class HttpCorrector implements Corrector {
   constructor(
     private readonly config: LlmConfig,
@@ -61,7 +64,7 @@ export class HttpCorrector implements Corrector {
     } catch {
       throw new CorrectionError(
         "invalid_json",
-        `correction model did not return JSON: ${content.slice(0, 120)}`,
+        `correction model did not return JSON: ${content.slice(0, ERROR_SNIPPET_MAX)}`,
       );
     }
 

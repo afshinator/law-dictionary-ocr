@@ -10,11 +10,19 @@ import {
   compareToAnswerKey,
   formatReport,
   gateReport,
+  parseAnswerKeyPage,
 } from "../../src/eval/accuracy.ts";
 
-function entry(headword: string, fa: string, def: string | null, id = headword): Entry {
+function entry(
+  headword: string,
+  fa: string,
+  def: string | null,
+  id = headword,
+  opts: Partial<Entry> = {},
+): Entry {
   return {
     entry_id: id,
+    first_line_index: 0,
     headword_en: headword,
     headword_normalized: headword.toLowerCase(),
     pronunciation: null,
@@ -27,6 +35,7 @@ function entry(headword: string, fa: string, def: string | null, id = headword):
     needs_review: false,
     review_reasons: [],
     confidence: 0.95,
+    ...opts,
   };
 }
 
@@ -205,5 +214,147 @@ describe("formatReport", () => {
     assert.match(text, /50\.0%/);
     assert.match(text, /dot/i);
     assert.match(text, /پدر/);
+  });
+});
+
+describe("parseAnswerKeyPage", () => {
+  it("accepts a valid page with an optional first_line_index", () => {
+    const page = parseAnswerKeyPage({
+      page_number: 7,
+      side: "left",
+      entries: [
+        { headword_en: "Abet", translation_fa: "x", definition_en: null, first_line_index: 0 },
+      ],
+    });
+    assert.equal(page.entries[0]?.first_line_index, 0);
+  });
+
+  it("rejects an out-of-range first_line_index (negative or non-integer)", () => {
+    const base = {
+      page_number: 7,
+      side: "left",
+      entries: [{ headword_en: "Abet", translation_fa: "x", definition_en: null }],
+    };
+    assert.throws(() =>
+      parseAnswerKeyPage({ ...base, entries: [{ ...base.entries[0], first_line_index: -1 }] }),
+    );
+    assert.throws(() =>
+      parseAnswerKeyPage({ ...base, entries: [{ ...base.entries[0], first_line_index: 1.5 }] }),
+    );
+  });
+});
+
+describe("E1 per-field precision/recall", () => {
+  it("reports perfect per-field metrics", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: "To aid" }]);
+    const r = compareToAnswerKey([entry("Abet", "x", "To aid")], rows);
+    assert.equal(r.fields.headword_en.precision, 1);
+    assert.equal(r.fields.translation_fa.recall, 1);
+    assert.equal(r.fields.definition_en.precision, 1);
+  });
+
+  it("a refused entry lowers neither translation precision nor recall, and raises E6", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    const r = compareToAnswerKey([entry("Abet", "", null)], rows);
+    assert.equal(r.fields.translation_fa.precision, 1);
+    assert.equal(r.fields.translation_fa.recall, 1);
+    assert.equal(r.refusalRate, 1);
+  });
+});
+
+describe("E2 segmentation F1", () => {
+  it("is null when no keyed row carries first_line_index", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    assert.equal(compareToAnswerKey([entry("Abet", "x", null)], rows).segmentation, null);
+  });
+
+  it("detects a split entry (extra predicted start lowers precision)", () => {
+    const rows = key([
+      { headword_en: "Abet", translation_fa: "x", definition_en: null, first_line_index: 0 },
+    ]);
+    const r = compareToAnswerKey(
+      [
+        entry("Abet", "x", null, "Abet", { first_line_index: 0 }),
+        entry("Abet", "x", null, "split-half", { first_line_index: 1 }),
+      ],
+      rows,
+    );
+    assert.ok(r.segmentation && r.segmentation.precision < 1);
+    assert.equal(r.segmentation?.recall, 1);
+  });
+
+  it("detects a merged pair (missing predicted start lowers recall)", () => {
+    const rows = key([
+      { headword_en: "Abet", translation_fa: "x", definition_en: null, first_line_index: 0 },
+      { headword_en: "Abate", translation_fa: "y", definition_en: null, first_line_index: 1 },
+    ]);
+    const r = compareToAnswerKey([entry("Abet", "x", null, "Abet", { first_line_index: 0 })], rows);
+    assert.ok(r.segmentation && r.segmentation.recall < 1);
+    assert.equal(r.segmentation?.precision, 1);
+  });
+});
+
+describe("E3 bilingual alignment", () => {
+  it("detects a swapped equivalent between two correct headwords", () => {
+    const rows = key([
+      {
+        headword_en: "Abet",
+        translation_fa: "\u0645\u0639\u0627\u0648\u0646\u062A",
+        definition_en: null,
+      },
+      {
+        headword_en: "Abate",
+        translation_fa: "\u0641\u0631\u0648\u06A9\u0634",
+        definition_en: null,
+      },
+    ]);
+    const r = compareToAnswerKey(
+      [
+        entry("Abet", "\u0641\u0631\u0648\u06A9\u0634", null),
+        entry("Abate", "\u0645\u0639\u0627\u0648\u0646\u062A", null),
+      ],
+      rows,
+    );
+    assert.equal(r.alignment.aligned, 0);
+    assert.equal(r.alignment.swapped, 2);
+    assert.equal(r.alignment.rate, 0);
+  });
+});
+
+describe("E4/E5/E6", () => {
+  it("reports English WER over definitions", () => {
+    const rows = key([
+      { headword_en: "Abet", translation_fa: "x", definition_en: "to aid and support" },
+    ]);
+    const r = compareToAnswerKey([entry("Abet", "x", "to aid or support")], rows);
+    assert.ok(r.wer > 0);
+  });
+
+  it("reports grounding rate from review_reasons (E5)", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    const r = compareToAnswerKey(
+      [entry("Abet", "x", null, "Abet", { review_reasons: ["grounding_fail"] })],
+      rows,
+    );
+    assert.equal(r.groundingRate, 0);
+  });
+
+  it("reports refusal rate (E6)", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    const r = compareToAnswerKey([entry("Abet", "", null)], rows);
+    assert.equal(r.refusalRate, 1);
+  });
+});
+
+describe("gateReport per-field", () => {
+  it("fails when headword recall is below the minimum", () => {
+    const rows = key([
+      { headword_en: "Abet", translation_fa: "x", definition_en: null },
+      { headword_en: "Abate", translation_fa: "y", definition_en: null },
+    ]);
+    const r = compareToAnswerKey([entry("Abet", "x", null)], rows);
+    const g = gateReport(r);
+    assert.equal(g.pass, false);
+    assert.match(g.reasons.join(" "), /headword_en recall/);
   });
 });

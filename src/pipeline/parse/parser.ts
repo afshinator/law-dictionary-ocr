@@ -128,6 +128,7 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
 
   const entry: Entry = {
     entry_id: `${pageNumber}-${transcript.column}-${ce.line_indices[0] ?? 0}`, // shortcut: entry_id collides on empty/duplicate first line_indices; fix in the id/DB ticket
+    first_line_index: ce.line_indices[0] ?? 0,
     headword_en: ce.headword_en,
     headword_normalized: ce.headword_en.toLowerCase().trim(),
     pronunciation: ce.pronunciation,

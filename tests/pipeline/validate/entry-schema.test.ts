@@ -8,6 +8,7 @@ import { insertEntrySchema } from "../../../src/pipeline/validate/entry-schema.t
 
 const validEntry = () => ({
   entry_id: "p05-l-0001",
+  first_line_index: 0,
   headword_en: "abandon",
   headword_normalized: "abandon",
   pronunciation: "əˈbændən",
@@ -53,6 +54,7 @@ describe("insertEntrySchema — accepts", () => {
   it("omitted optionals (table defaults / nullable columns)", () => {
     const minimal: Record<string, unknown> = {
       entry_id: "p05-l-0001",
+      first_line_index: 0,
       headword_en: "abandon",
       headword_normalized: "abandon",
       translation_fa: "ترک کردن",

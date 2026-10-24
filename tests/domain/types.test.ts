@@ -20,6 +20,7 @@ describe("types", () => {
     };
     const entry: Entry = {
       entry_id: "p05-l-0001",
+      first_line_index: 0,
       headword_en: "abandon",
       headword_normalized: "abandon",
       pronunciation: "əˈbændən",
@@ -38,6 +39,7 @@ describe("types", () => {
     // if types.ts declares them, so assert the runtime shape too.
     assert.deepEqual(Object.keys(entry), [
       "entry_id",
+      "first_line_index",
       "headword_en",
       "headword_normalized",
       "pronunciation",
@@ -61,6 +63,7 @@ describe("types", () => {
   it("allows every nullable field to be null (F4)", () => {
     const entry: Entry = {
       entry_id: "p05-r-0002",
+      first_line_index: 1,
       headword_en: "ad hoc",
       headword_normalized: "ad hoc",
       pronunciation: null,
@@ -78,6 +81,6 @@ describe("types", () => {
     assert.equal(entry.pos, null);
     assert.equal(entry.definition_en, null);
     assert.equal(entry.confidence, null);
-    assert.equal(Object.keys(entry).length, 13);
+    assert.equal(Object.keys(entry).length, 14);
   });
 });

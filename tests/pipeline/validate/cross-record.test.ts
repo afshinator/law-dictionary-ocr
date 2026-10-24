@@ -11,6 +11,7 @@ import {
 
 const mkEntry = (headword_normalized: string, is_continuation = false): Entry => ({
   entry_id: `p05-l-${headword_normalized}`,
+  first_line_index: 0,
   headword_en: headword_normalized,
   headword_normalized,
   pronunciation: null,
