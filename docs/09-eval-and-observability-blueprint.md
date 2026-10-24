@@ -1,0 +1,168 @@
+# 09 — Evaluation, guardrails and observability blueprint
+
+**Date:** 2026-10-23
+**Version:** 0.2 — decisions taken
+**Status:** Decisions recorded in §7. Metric and guardrail designs remain **proposed** until
+implemented; threshold *values* are deliberately unset pending the first real measurement.
+
+Evidence basis: direct inspection of `src/` at commit `d575689`. Every claim about current
+behaviour cites a file.
+
+---
+
+## 1. Boundaries as they exist today
+
+```
+(no runner)        nothing walks a directory; no CLI, no argv handling in src/
+      ↓
+pipeline/ocr       performOCR(path, client) → protos ITextAnnotation
+                   boundary: image bytes → OCR JSON. The payload shape is NOT validated.
+      ↓
+pipeline/parse     readVisionWords(raw: unknown) → Word[] → buildColumnTranscripts → parsePage
+                   boundary: OCR JSON → ColumnTranscript. Takes `unknown`, throws when
+                   `pages[]` is absent (parser.ts:65).
+      ↓
+pipeline/correct   Corrector.structure(transcript) → CorrectedEntry[]
+                   boundary: THE LLM BOUNDARY. zod schema + line_indices invariants
+                   (http-corrector.ts:79-107).
+      ↓
+pipeline/validate  toEntry(): insertEntrySchema + farsiFieldSchema + englishHeadwordSchema
+                   + looksSuspiciousFa + min word confidence → needs_review
+                   (parser.ts:129-146). Flags, never drops.
+      ↓
+eval               compareToAnswerKey(entries, key) → accuracy, CER, dot failures;
+                   gateReport() applies ENTRY_ACCURACY_MIN (eval/accuracy.ts).
+      ↓
+(no sink)          no database, no index, no logs, no run artifacts.
+```
+
+## 2. Corrections to earlier statements in this repo's history
+
+- **`checkAlphabeticalContinuity` is never called by the pipeline.** All twelve references
+  live in its own test (`tests/pipeline/validate/cross-record.test.ts`); `src/` mentions
+  cross-record only in comments (`pipeline/correct/corrector.ts:3`,
+  `pipeline/correct/http-corrector.ts:3`). The cross-record validation layer described in
+  the architecture **does not run**.
+- **"fallow treats a test-only export as unused" was wrong for this repo.** `cross-record`
+  is imported only by a test, and fallow reports 0 issues. The earlier claim came from a
+  scratch project with no entry point. Two deferrals were made on that wrong belief:
+  `MockCorrector` (ticket #6) and a zod loader/schema for answer keys (ticket #7). Both are
+  buildable now; deferring them remains defensible on "no consumer yet" grounds, not on
+  tooling grounds.
+
+## 3. Gap inventory
+
+| Capability | Present | Missing |
+| --- | --- | --- |
+| Structural validation | zod at the LLM boundary; Tier-1 `insertEntrySchema`; Tier-2 script refinements | no validation of the OCR payload shape |
+| Hallucination guardrails | anti-confabulation rules in the prompt; `needs_review` flags | no mechanical check that output text exists in the source; no repair loop; no quarantine |
+| Evaluation | entry exact accuracy, CER, dot-integrity failures, 6 structural fixtures | per-field precision/recall, segmentation metric, alignment metric, keyed ground truth on disk |
+| Observability | none | events, latency, error taxonomy, token/cost capture, run artifacts |
+| Decision records | ADR-0001 (retrieval not fine-tuning), 0002 (lossless capture), 0003 (layout/config), 0004 (correction slotting) | eval definitions, failure policy, model selection and cost, logging format |
+
+## 4. Guardrails — proposed
+
+Each is a pure function over data already in memory, so each is testable without a network
+call.
+
+| ID | Guard | Mechanism | Proposed failure policy |
+| --- | --- | --- | --- |
+| A1 | Grounding | every non-empty token of `translation_fa` (and `definition_en`) must appear in the concatenated text of the entry's cited lines | flag `needs_review`, emit event |
+| A2 | Snippet verbatim | `raw_ocr_snippet` equals the cited lines joined by one space | reject the entry — the model rewrote OCR |
+| A3 | Coverage / partition | cited lines cover the whole transcript except a declared noise set (page numbers, running headers) | reject the page |
+| A4 | Mis-slot | `translation_fa` contains no Latin (already enforced); `definition_en` contains at least one Latin letter | flag `needs_review` |
+| A5 | Repair-retry | on A1–A4 failure, re-ask the model once with the violation appended | see §7 D2: the failing attempt quarantines the page |
+| A6 | Wire cross-record | call the existing `checkAlphabeticalContinuity` across a corpus pass, runover-tolerant | flag the offending entries |
+
+A1 is the load-bearing one: invented Farsi fails because the text is not in the OCR the
+model was given. It costs a token-set comparison, not a model call.
+
+## 5. Evaluation — proposed
+
+Metric definitions, to be recorded in an ADR before implementation:
+
+- **E1 Field precision / recall**, per field (`headword_en`, `translation_fa`,
+  `definition_en`), strict after normalisation.
+  `precision = correct / returned`, `recall = correct / expected`.
+  **Per §7 D3, `headword_en` and `translation_fa` are hard gates**, so a high aggregate
+  page accuracy cannot hide a dropped Farsi equivalent. `definition_en` is reported and
+  flags, but is not a gate.
+- **E2 Segmentation F1** — predicted entry-start lines vs keyed entry-start lines. Catches
+  one printed entry split into two records, and two records merged into one.
+- **E3 Bilingual alignment accuracy** — fraction of paired entries whose `translation_fa`
+  came from the same keyed row as its headword. Misalignment is a distinct failure from
+  wrong text, and the current harness cannot separate them.
+- **E4 Text fidelity** — Persian CER (exists); English WER (missing).
+- **E5 Grounding rate** — share of entries passing A1.
+- **Deferred deliberately:** retrieval precision@k / recall@k and context-precision /
+  factuality. There is no retrieval code in this repository; those metrics need an index and
+  belong to the deployed release.
+
+Ground truth per §7 D4: **10–15 hand-keyed pages, single annotator (the owner)**. Sampling
+is stratified, not convenient — the set must contain a gutter-margin page, a cross-page
+runover, a page heavy in English definitions/examples, and a multi-translation Farsi block,
+because those are the conditions the deterministic layer is known to vary on.
+
+Current thresholds live in `src/config/thresholds.ts` (`LOW_CONFIDENCE_WORD`,
+`ENTRY_ACCURACY_MIN`); any new gate belongs there and nowhere else. **Gate values are not
+chosen here**: per-field gate constants are added with the measurement that calibrates them,
+which is the same rule already applied to the 95% aggregate gate.
+
+## 6. Observability — proposed
+
+- **O1 Events** — one JSONL line per stage completion:
+  `{run_id, page, side, stage, outcome, duration_ms, error_code?, model?, tokens_in?, tokens_out?}`.
+  Written under `data/runs/<run_id>/events.jsonl` (gitignored, like the scans).
+- **O2 Error taxonomy** — a closed enum rather than free text: `http_error`, `empty_ocr`,
+  `invalid_json`, `schema_invalid`, `line_indices_invalid`, `grounding_fail`,
+  `snippet_mismatch`, `coverage_fail`.
+- **O3 Latency** — per-call `duration_ms`; P50/P95/P99 computed by a script over the JSONL.
+  No APM, no server, no dependency.
+- **O4 Cost** — record tokens; keep the price table in config, because vendor prices move.
+- **O5 Redaction** — per §7 D5, full transcript text is kept in the local run directory for
+  post-mortem inspection (grounding failures cannot be diagnosed from hashes). API keys are
+  never logged. Anything committed carries hashes, not page text.
+
+## 7. Decisions and deferrals
+
+### Decided
+
+| ID | Decision |
+| --- | --- |
+| **D1** | **Provider-agnostic.** No model id is pinned. Events record `provider` and `model` read from `config/llm.ts`. The owner will trial DeepSeek V4 Pro first, then others; the interface must not assume one vendor. |
+| **D2** | **Quarantine on validation failure.** A page that fails validation is quarantined, and the run continues rather than aborting. Repair-retry is bounded to a single attempt; see the open reading below. |
+| **D3** | **Per-field gates on the strict fields**: `headword_en` and `translation_fa` gate. Aggregate page accuracy is reported but never the sole gate, because high character accuracy can hide a dropped Farsi equivalent. `definition_en` is reported, not gated. |
+| **D4** | **Ground truth: 10–15 hand-keyed pages, single annotator.** Stratified for gutter margins, cross-page runovers, definition/example-heavy pages and multi-translation Farsi blocks. No inter-annotator agreement. |
+| **D5** | **Full text stays local.** Run artifacts under `data/runs/<run_id>/` keep raw transcripts for post-mortem grounding/parsing analysis. Keys redacted from logs; committed artifacts carry hashes, not page text. |
+| **D6** | **Retrieval and RAG evals are deferred.** No index exists; scope stays on extraction and grounding evals (E1–E5) until the search layer is built. |
+
+### Still open
+
+| ID | Question | Why it waits |
+| --- | --- | --- |
+| **O1** | Cost ceiling per page and per corpus run. | Bounded by D2's single retry; a dollar figure is a corpus-time decision. |
+| **O2** | Deployed-release hosting shape (serverless vs prebuilt index). | Belongs to the deployed release; JSONL works either way. |
+| **O3** | Acceptable `needs_review` rate at corpus scale. | Cannot be set before measuring; guessing it would repeat the 95% mistake. |
+| **O4** | Per-field gate values. | Same rule: calibrate from the first measurement, never invent. |
+
+### Reading to confirm on D2
+
+D2 says a failing page is quarantined immediately. Two readings, and they differ by one API
+call per failed column:
+
+- **(i)** one repair attempt first; if that attempt also fails validation, quarantine at once
+  and move on (no further retries).
+- **(ii)** no repair attempt at all: first validation failure quarantines immediately.
+
+The document currently records **(i)** in A5. Confirm or switch to (ii).
+
+## 8. Sequencing
+
+1. A1–A4 as pure functions, test-first (no pages needed).
+2. E1–E5 metric functions with synthetic tests; real numbers require keyed pages.
+3. O1–O4, because ticket #8 cannot be diagnosed without them.
+4. A5/A6 policy wiring, including per-field gating (D3).
+5. ADRs written alongside, not afterwards: eval definitions, failure policy, model
+   selection and cost, logging format.
+
+None of this blocks ticket #8 — #8 blocks on credentials and capture, not on this blueprint.
