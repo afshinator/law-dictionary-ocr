@@ -194,6 +194,7 @@ describe("parsePage", () => {
     const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
     const entries = await parsePage(raw, 5, stub({ left: [ce({ translation_fa: "latinword" })] }));
     assert.equal(entries[0]?.needs_review, true);
+    assert.ok(entries[0]?.review_reasons.includes("translation_script"));
   });
 
   it("flags a digits-only translation_fa (F1: farsiFieldSchema fails, looksSuspiciousFa passes)", async () => {
@@ -202,12 +203,14 @@ describe("parsePage", () => {
     const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
     const entries = await parsePage(raw, 5, stub({ left: [ce({ translation_fa: "1234" })] }));
     assert.equal(entries[0]?.needs_review, true);
+    assert.ok(entries[0]?.review_reasons.includes("translation_script"));
   });
 
   it("flags a Farsi headword_en (F2: englishHeadwordSchema failure only)", async () => {
     const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
     const entries = await parsePage(raw, 5, stub({ left: [ce({ headword_en: "ترک" })] }));
     assert.equal(entries[0]?.needs_review, true);
+    assert.ok(entries[0]?.review_reasons.includes("headword_script"));
   });
 
   it("flags a Tier-1 structural failure (F2: malformed CorrectedEntry)", async () => {
@@ -215,6 +218,7 @@ describe("parsePage", () => {
     const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97 })]);
     const entries = await parsePage(raw, 5, stub({ left: [bad] }));
     assert.equal(entries[0]?.needs_review, true);
+    assert.ok(entries[0]?.review_reasons.includes("schema_invalid"));
   });
 
   it("T-FIX1: mean clears the threshold but a single 0.55 word still flags", async () => {
@@ -233,6 +237,7 @@ describe("parsePage", () => {
     assert.ok(e?.confidence !== null && e.confidence >= LOW_CONFIDENCE_WORD);
     // ... yet the min-cited-word gate flags it (D1/T-FIX1, register #8)
     assert.equal(e?.needs_review, true);
+    assert.ok(e?.review_reasons.includes("low_confidence"));
   });
 
   it("T-FIX1 mirror: all-high confidences are not flagged", async () => {
@@ -283,6 +288,7 @@ describe("parsePage", () => {
       }),
     );
     assert.equal(entries[0]?.needs_review, true);
+    assert.deepEqual(entries[0]?.review_reasons, ["grounding_fail"]);
   });
 
   it("A2: a rewritten raw_ocr_snippet flags needs_review", async () => {
@@ -298,6 +304,7 @@ describe("parsePage", () => {
       }),
     );
     assert.equal(entries[0]?.needs_review, true);
+    assert.deepEqual(entries[0]?.review_reasons, ["snippet_mismatch"]);
   });
 
   it("A4: a non-empty Farsi-only definition_en flags needs_review", async () => {
@@ -307,10 +314,32 @@ describe("parsePage", () => {
       stub({ left: [groundedCe({ definition_en: "\u062A\u0631\u06A9" })] }),
     );
     assert.equal(entries[0]?.needs_review, true);
+    assert.ok(entries[0]?.review_reasons.includes("definition_mis_slot"));
+  });
+
+  it("suspicious_farsi: a two-character translation is flagged", async () => {
+    const raw = vision([rawWord({ x: 100, y: 100, conf: 0.97, symbols: ["\u0628\u0627"] })]);
+    const entries = await parsePage(
+      raw,
+      5,
+      stub({
+        left: [
+          ce({
+            translation_fa: "\u0628\u0627", // با: valid Farsi script, but 2 chars
+            definition_en: null,
+            raw_ocr_snippet: "\u0628\u0627",
+            line_indices: [0],
+          }),
+        ],
+      }),
+    );
+    assert.equal(entries[0]?.needs_review, true);
+    assert.deepEqual(entries[0]?.review_reasons, ["suspicious_farsi"]);
   });
 
   it("A1/A2/A4: a grounded entry is not flagged", async () => {
     const entries = await parsePage(groundedVision(), 5, stub({ left: [groundedCe()] }));
     assert.equal(entries[0]?.needs_review, false);
+    assert.deepEqual(entries[0]?.review_reasons, []);
   });
 });

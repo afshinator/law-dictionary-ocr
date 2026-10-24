@@ -25,6 +25,7 @@ function entry(headword: string, fa: string, def: string | null, id = headword):
     source_image: { page_number: 7, column: "left", bbox: [0, 0, 10, 10] },
     is_continuation: false,
     needs_review: false,
+    review_reasons: [],
     confidence: 0.95,
   };
 }

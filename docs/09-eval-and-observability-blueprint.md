@@ -124,7 +124,11 @@ which is the same rule already applied to the 95% aggregate gate.
   line, so a failure is inspectable and never silent (§7 D10).
 - **O2 Error taxonomy** — a closed enum rather than free text: `http_error`, `empty_ocr`,
   `invalid_json`, `schema_invalid`, `line_indices_invalid`, `grounding_fail`,
-  `snippet_mismatch`, `coverage_fail`.
+  `snippet_mismatch`, `coverage_fail`. Entry-level review reasons (why `needs_review` is set)
+  are a second closed enum in `src/domain/review-reasons.ts`: `schema_invalid`,
+  `translation_script`, `headword_script`, `suspicious_farsi`, `low_confidence`,
+  `grounding_fail`, `snippet_mismatch`, `definition_mis_slot` — the three shared names are
+  where the entry-level concept overlaps the stage-level code.
 - **O3 Latency** — per-call `duration_ms`; P50/P95/P99 computed by a script over the JSONL.
   No APM, no server, no dependency.
 - **O4 Cost** — record tokens; keep the price table in config, because vendor prices move.

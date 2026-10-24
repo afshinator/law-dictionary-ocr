@@ -4,6 +4,7 @@
 // is undecided (docs 13.4) -- it segments the transcript into entries and corrects
 // OCR. buildColumnTranscripts() is independently testable WITHOUT any LLM.
 import { LOW_CONFIDENCE_WORD } from "../../config/thresholds.ts";
+import type { ReviewReason } from "../../domain/review-reasons.ts";
 import type { Entry, Word } from "../../domain/types.ts";
 import type { CorrectedEntry, Corrector } from "../correct/corrector.ts";
 import { insertEntrySchema } from "../validate/entry-schema.ts";
@@ -137,6 +138,7 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
     source_image: { page_number: pageNumber, column: transcript.column, bbox },
     is_continuation: ce.is_continuation,
     needs_review: false,
+    review_reasons: [],
     confidence: confs.length > 0 ? confs.reduce((s, c) => s + c, 0) / confs.length : null,
   };
 
@@ -149,18 +151,18 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
   // mean -- one garbage word must not be diluted (F5 jopa 0.55 -> mean ~0.875).
   // No numeric word confidence anywhere -> gate skipped (source F-D behaviour).
   const lowConfidence = wordConfs.length > 0 && Math.min(...wordConfs) < LOW_CONFIDENCE_WORD;
-  if (
-    !structural.success ||
-    !farsiOk ||
-    !enOk ||
-    looksSuspiciousFa(translation_fa) ||
-    lowConfidence ||
-    ungrounded.length > 0 ||
-    snippetTampered ||
-    misSlottedDefinition
-  ) {
-    entry.needs_review = true;
-  }
+  const reviewReasons: ReviewReason[] = [];
+  if (!structural.success) reviewReasons.push("schema_invalid");
+  if (!farsiOk) reviewReasons.push("translation_script");
+  if (!enOk) reviewReasons.push("headword_script");
+  if (looksSuspiciousFa(translation_fa)) reviewReasons.push("suspicious_farsi");
+  if (lowConfidence) reviewReasons.push("low_confidence");
+  if (ungrounded.length > 0) reviewReasons.push("grounding_fail");
+  if (snippetTampered) reviewReasons.push("snippet_mismatch");
+  if (misSlottedDefinition) reviewReasons.push("definition_mis_slot");
+
+  entry.needs_review = reviewReasons.length > 0;
+  entry.review_reasons = reviewReasons;
   return entry;
 }
 

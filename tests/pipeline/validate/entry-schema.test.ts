@@ -18,6 +18,7 @@ const validEntry = () => ({
   source_image: { page_number: 5, column: "left", bbox: [118, 226, 420, 31] },
   is_continuation: false,
   needs_review: false,
+  review_reasons: [],
   confidence: 0.96,
 });
 
@@ -57,6 +58,7 @@ describe("insertEntrySchema — accepts", () => {
       translation_fa: "ترک کردن",
       raw_ocr_snippet: "x",
       source_image: { page_number: 5, column: "right", bbox: [0, 0, 10, 10] },
+      review_reasons: [],
     };
     assert.equal(insertEntrySchema.safeParse(minimal).success, true);
   });
@@ -181,5 +183,31 @@ describe("insertEntrySchema — optional column types", () => {
     assert.deepEqual(issuePaths(mutation({ pronunciation: 1 })), ["pronunciation"]);
     assert.deepEqual(issuePaths(mutation({ pos: false })), ["pos"]);
     assert.deepEqual(issuePaths(mutation({ definition_en: {} })), ["definition_en"]);
+  });
+});
+
+describe("insertEntrySchema — review_reasons", () => {
+  it("accepts an empty list", () => {
+    assert.equal(insertEntrySchema.safeParse(validEntry()).success, true);
+  });
+
+  it("rejects a missing review_reasons (required)", () => {
+    const fixture: Record<string, unknown> = validEntry();
+    delete fixture.review_reasons;
+    assert.deepEqual(issuePaths(fixture), ["review_reasons"]);
+  });
+
+  it("rejects a non-array review_reasons", () => {
+    assert.deepEqual(issuePaths(mutation({ review_reasons: "grounding_fail" })), [
+      "review_reasons",
+    ]);
+  });
+
+  it("rejects an unknown reason code", () => {
+    assert.deepEqual(issuePaths(mutation({ review_reasons: ["free_text"] })), ["review_reasons.0"]);
+  });
+
+  it("rejects a non-string element", () => {
+    assert.deepEqual(issuePaths(mutation({ review_reasons: [1] })), ["review_reasons.0"]);
   });
 });

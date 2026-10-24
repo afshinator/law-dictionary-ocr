@@ -4,6 +4,7 @@
 // semantics: notNull -> required non-nullable; notNull+default -> optional;
 // no notNull -> optional + nullable. Keys are the contract's snake_case (§4).
 import { z } from "zod";
+import { REVIEW_REASONS } from "../../domain/review-reasons.ts";
 import type { SourceImage } from "../../domain/types.ts";
 
 // Typed against the contract shape so field/type drift from types.ts fails to compile.
@@ -28,5 +29,6 @@ export const insertEntrySchema = z.object({
   source_image: sourceImageSchema,
   is_continuation: z.boolean().optional(),
   needs_review: z.boolean().optional(),
+  review_reasons: z.array(z.enum(REVIEW_REASONS)),
   confidence: z.number().optional().nullable(),
 });

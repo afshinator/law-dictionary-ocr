@@ -18,6 +18,7 @@ const mkEntry = (headword_normalized: string, is_continuation = false): Entry =>
   source_image: { page_number: 5, column: "left", bbox: [0, 0, 10, 10] },
   is_continuation,
   needs_review: false,
+  review_reasons: [],
   confidence: null,
 });
 

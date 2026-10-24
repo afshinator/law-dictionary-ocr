@@ -30,6 +30,7 @@ describe("types", () => {
       source_image: sourceImage,
       is_continuation: false,
       needs_review: false,
+      review_reasons: [],
       confidence: 0.96,
     };
 
@@ -47,6 +48,7 @@ describe("types", () => {
       "source_image",
       "is_continuation",
       "needs_review",
+      "review_reasons",
       "confidence",
     ]);
     assert.deepEqual(Object.keys(sourceImage), ["page_number", "column", "bbox"]);
@@ -69,12 +71,13 @@ describe("types", () => {
       source_image: { page_number: 5, column: "right", bbox: [10, 20, 30, 40] },
       is_continuation: true,
       needs_review: true,
+      review_reasons: [],
       confidence: null,
     };
     assert.equal(entry.pronunciation, null);
     assert.equal(entry.pos, null);
     assert.equal(entry.definition_en, null);
     assert.equal(entry.confidence, null);
-    assert.equal(Object.keys(entry).length, 12);
+    assert.equal(Object.keys(entry).length, 13);
   });
 });

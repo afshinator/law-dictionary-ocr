@@ -1,6 +1,8 @@
 // Entry shape per docs 10. Direction is English headword -> Farsi equivalent ->
 // English definition (correcting NOTES.md's "Farsi_Term" mislabel).
 
+import type { ReviewReason } from "./review-reasons.ts";
+
 export type Column = "left" | "right";
 
 export interface SourceImage {
@@ -27,6 +29,8 @@ export interface Entry {
   is_continuation: boolean;
   /** set by validation */
   needs_review: boolean;
+  /** closed set of why needs_review is set (docs/09 §6); empty when clean */
+  review_reasons: ReviewReason[];
   /** min/avg of the entry's Vision word confidences */
   confidence: number | null;
 }
