@@ -70,7 +70,7 @@ call.
 | --- | --- | --- | --- |
 | A1 | Grounding | every non-empty token of `translation_fa` (and `definition_en`) must appear in the entry's cited transcript lines, compared after stripping whitespace and ZWNJ (§7 D8). Grounds against the transcript, never against the model-authored `raw_ocr_snippet` | flag `needs_review`, emit event |
 | A2 | Snippet verbatim | `raw_ocr_snippet` equals the cited lines joined by one space | reject the entry — the model rewrote OCR |
-| A3 | Coverage / partition | cited lines cover the whole transcript except a declared noise set (page numbers, running headers) | reject the page |
+| A3 | Coverage / partition | report which transcript lines no entry cites, excluding the declared noise set (page numbers, running headers) | report only — **never reject the page**. ADR-0004 allows unrecoverable garbage to be dropped, so uncited lines are expected: 3 of 6 golden fixtures leave noise lines uncited |
 | A4 | Mis-slot | `translation_fa` contains no Latin (already enforced); `definition_en` contains at least one Latin letter | flag `needs_review` |
 | A5 | Repair-retry | on A1–A4 failure, re-ask the model **once** with the violation appended | if the retry also fails, quarantine **the column** immediately — no further retries, and the other column still runs (§7 D2, D9) |
 | A6 | Wire cross-record | call the existing `checkAlphabeticalContinuity` across a corpus pass, runover-tolerant | flag the offending entries |
