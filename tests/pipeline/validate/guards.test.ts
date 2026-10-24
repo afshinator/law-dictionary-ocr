@@ -2,6 +2,7 @@
 // Pure functions over in-memory data; no network, no model call.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import {
@@ -116,4 +117,44 @@ describe("isNoiseLine (A3 helper)", () => {
     assert.equal(isNoiseLine("Abet"), false);
     assert.equal(isNoiseLine("\u062A\u0634\u0648\u06CC\u0642"), false);
   });
+});
+
+// Golden fixtures are hand-checked, so A1/A2/A3 must pass on all of them: the guards
+// must never false-flag correct output. They contain zero corrected Farsi tokens, so
+// this locks in the no-false-positive property; the failure mode is covered above.
+const { fixtures } = JSON.parse(readFileSync("tests/fixtures/correction-golden.json", "utf8")) as {
+  fixtures: {
+    fixture_id: string;
+    input: { lines: { text: string }[] };
+    expected: {
+      raw_ocr_snippet: string;
+      line_indices: number[];
+      translation_fa: string;
+      definition_en: string | null;
+    }[];
+  }[];
+};
+
+describe("golden fixtures (no false positives)", () => {
+  for (const f of fixtures) {
+    it(`${f.fixture_id}: A1 grounded, A2 verbatim, A3 only noise uncited`, () => {
+      const lines = f.input.lines.map((l) => l.text);
+      const cited = new Set(f.expected.flatMap((e) => e.line_indices));
+      assert.deepEqual(uncoveredLines(lines, [...cited]), []);
+      for (const e of f.expected) {
+        const citedText = e.line_indices.map((i) => lines[i]).join(" ");
+        assert.equal(e.raw_ocr_snippet, citedText, "A2: snippet must be verbatim");
+        assert.deepEqual(
+          ungroundedTokens(e.translation_fa, citedText),
+          [],
+          "A1: translation_fa must be grounded",
+        );
+        assert.deepEqual(
+          ungroundedTokens(e.definition_en ?? "", citedText),
+          [],
+          "A1: definition_en must be grounded",
+        );
+      }
+    });
+  }
 });
