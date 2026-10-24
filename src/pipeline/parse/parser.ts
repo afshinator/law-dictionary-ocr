@@ -166,9 +166,19 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
   return entry;
 }
 
-/** Full page parse -> Entries. Requires a Corrector (model undecided, docs 13.4).
- *  Deterministic transcript building + validation are done here; only structure()
- *  is external. */
+/** Parse one column transcript into Entries. The runner calls this per column so a
+ *  failed column can be quarantined without dropping the other side (D9). */
+export async function parseColumn(
+  transcript: ColumnTranscript,
+  pageNumber: number,
+  corrector: Corrector,
+): Promise<Entry[]> {
+  const corrected = await corrector.structure(transcript);
+  return corrected.map((ce) => toEntry(ce, transcript, pageNumber));
+}
+
+/** Full page parse -> Entries, left column first. Convenience for both columns; column
+ *  isolation lives in the runner, which calls parseColumn directly. */
 export async function parsePage(
   raw: unknown,
   pageNumber: number,
@@ -176,9 +186,6 @@ export async function parsePage(
 ): Promise<Entry[]> {
   const transcripts = buildColumnTranscripts(raw, pageNumber);
   const entries: Entry[] = [];
-  for (const t of transcripts) {
-    const corrected = await corrector.structure(t);
-    for (const ce of corrected) entries.push(toEntry(ce, t, pageNumber));
-  }
+  for (const t of transcripts) entries.push(...(await parseColumn(t, pageNumber, corrector)));
   return entries;
 }

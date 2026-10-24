@@ -5,6 +5,7 @@
 import type { LlmConfig } from "../../config/llm.ts";
 import type { ColumnTranscript } from "../parse/lines.ts";
 import type { CorrectedEntry, Corrector } from "./corrector.ts";
+import { CorrectionError } from "./errors.ts";
 import { CORRECTION_PROMPT } from "./prompt.ts";
 import { correctedEntriesSchema } from "./schema.ts";
 
@@ -36,7 +37,7 @@ export class HttpCorrector implements Corrector {
     });
 
     if (!response.ok) {
-      throw new Error(`correction model returned HTTP ${response.status}`);
+      throw new CorrectionError("http_error", `correction model returned HTTP ${response.status}`);
     }
 
     const payload = (await response.json()) as {
@@ -44,7 +45,7 @@ export class HttpCorrector implements Corrector {
     };
     const content = payload.choices?.[0]?.message?.content;
     if (typeof content !== "string") {
-      throw new Error("correction model returned no message content");
+      throw new CorrectionError("invalid_json", "correction model returned no message content");
     }
 
     const entries = this.parseAndValidate(content, transcript);
@@ -58,7 +59,10 @@ export class HttpCorrector implements Corrector {
     try {
       raw = JSON.parse(content);
     } catch {
-      throw new Error(`correction model did not return JSON: ${content.slice(0, 120)}`);
+      throw new CorrectionError(
+        "invalid_json",
+        `correction model did not return JSON: ${content.slice(0, 120)}`,
+      );
     }
 
     const parsed = correctedEntriesSchema.safeParse(raw);
@@ -66,7 +70,7 @@ export class HttpCorrector implements Corrector {
       const detail = parsed.error.issues
         .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
         .join("; ");
-      throw new Error(`correction output invalid: ${detail}`);
+      throw new CorrectionError("schema_invalid", `correction output invalid: ${detail}`);
     }
 
     for (const entry of parsed.data) {
@@ -74,13 +78,15 @@ export class HttpCorrector implements Corrector {
         (n, i) => i === 0 || n > (entry.line_indices[i - 1] as number),
       );
       if (!ascending) {
-        throw new Error(
+        throw new CorrectionError(
+          "line_indices_invalid",
           `correction output invalid: line_indices not ascending for "${entry.headword_en}"`,
         );
       }
       const outOfRange = entry.line_indices.some((n) => n >= transcript.lines.length);
       if (outOfRange) {
-        throw new Error(
+        throw new CorrectionError(
+          "line_indices_invalid",
           `correction output invalid: line_indices out of range (transcript has ${transcript.lines.length} lines)`,
         );
       }
