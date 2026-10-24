@@ -4,7 +4,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type { Entry } from "../../../src/domain/types.ts";
-import { checkAlphabeticalContinuity } from "../../../src/pipeline/validate/cross-record.ts";
+import {
+  checkAlphabeticalContinuity,
+  flagOrderViolations,
+} from "../../../src/pipeline/validate/cross-record.ts";
 
 const mkEntry = (headword_normalized: string, is_continuation = false): Entry => ({
   entry_id: `p05-l-${headword_normalized}`,
@@ -73,5 +76,42 @@ describe("checkAlphabeticalContinuity", () => {
       entries.map((e) => e.headword_normalized),
       snapshot,
     );
+  });
+});
+
+describe("flagOrderViolations", () => {
+  it("marks the offending entry needs_review with order_violation", () => {
+    const entries = [mkEntry("abandon"), mkEntry("abide"), mkEntry("abate")];
+    flagOrderViolations(entries);
+    assert.equal(entries[0]?.needs_review, false);
+    assert.equal(entries[1]?.needs_review, false);
+    assert.equal(entries[2]?.needs_review, true);
+    assert.ok(entries[2]?.review_reasons.includes("order_violation"));
+  });
+
+  it("catches a column-boundary break corpus-wide but not per-column", () => {
+    const perColumnLeft = [mkEntry("bath"), mkEntry("zebra")];
+    const perColumnRight = [mkEntry("abandon")]; // sorts before "zebra"
+    flagOrderViolations(perColumnLeft);
+    flagOrderViolations(perColumnRight);
+    assert.equal(
+      perColumnLeft.some((e) => e.needs_review),
+      false,
+    );
+    assert.equal(
+      perColumnRight.some((e) => e.needs_review),
+      false,
+    );
+
+    const corpus = [mkEntry("bath"), mkEntry("zebra"), mkEntry("abandon")];
+    flagOrderViolations(corpus);
+    assert.equal(corpus[2]?.needs_review, true);
+  });
+
+  it("does not double-flag an entry already carrying the reason", () => {
+    const entries = [mkEntry("abide"), mkEntry("abandon")];
+    flagOrderViolations(entries);
+    flagOrderViolations(entries);
+    assert.equal(entries[1]?.review_reasons.filter((r) => r === "order_violation").length, 1);
   });
 });

@@ -127,8 +127,8 @@ which is the same rule already applied to the 95% aggregate gate.
   `snippet_mismatch`, `coverage_fail`. Entry-level review reasons (why `needs_review` is set)
   are a second closed enum in `src/domain/review-reasons.ts`: `schema_invalid`,
   `translation_script`, `headword_script`, `suspicious_farsi`, `low_confidence`,
-  `grounding_fail`, `snippet_mismatch`, `definition_mis_slot` — the three shared names are
-  where the entry-level concept overlaps the stage-level code.
+  `grounding_fail`, `snippet_mismatch`, `definition_mis_slot`, `order_violation` — the three
+  shared names are where the entry-level concept overlaps the stage-level code.
 - **O3 Latency** — per-call `duration_ms`; P50/P95/P99 computed by a script over the JSONL.
   No APM, no server, no dependency.
 - **O4 Cost** — record tokens; keep the price table in config, because vendor prices move.

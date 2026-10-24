@@ -25,3 +25,16 @@ export function checkAlphabeticalContinuity(entries: Entry[]): OrderViolation[] 
   }
   return violations;
 }
+
+/** A6: route continuity violations to human review. Call per column for local breaks
+ *  (runner) and over the concatenated corpus for cross-boundary breaks (#8 driver). */
+export function flagOrderViolations(entries: Entry[]): void {
+  for (const v of checkAlphabeticalContinuity(entries)) {
+    const entry = entries[v.index];
+    if (entry === undefined) continue;
+    entry.needs_review = true;
+    if (!entry.review_reasons.includes("order_violation")) {
+      entry.review_reasons.push("order_violation");
+    }
+  }
+}

@@ -31,7 +31,7 @@ const vision = (words: ReturnType<typeof rawWord>[]) => ({
   pages: [{ blocks: [{ paragraphs: [{ words }] }] }],
 });
 
-const groundedEntry = (headword: string, fa: string): CorrectedEntry => ({
+const groundedEntry = (headword: string, fa: string, line = 0): CorrectedEntry => ({
   headword_en: headword,
   translation_fa: fa,
   definition_en: null,
@@ -39,7 +39,7 @@ const groundedEntry = (headword: string, fa: string): CorrectedEntry => ({
   pos: null,
   is_continuation: false,
   raw_ocr_snippet: `${headword} ${fa}`,
-  line_indices: [0],
+  line_indices: [line],
 });
 
 describe("runPage", () => {
@@ -102,6 +102,26 @@ describe("runPage", () => {
     assert.equal(result.entries[0]?.needs_review, true);
     assert.equal(result.events[0]?.needs_review_count, 1);
     assert.ok(result.events[0]?.review_reasons?.includes("grounding_fail"));
+  });
+
+  it("flags an out-of-order headword via A6 continuity (per column)", async () => {
+    const raw = vision([
+      rawWord(100, 100, ["Zebra"]),
+      rawWord(110, 100, ["\u06AF\u0648\u0631\u062E\u0631"]), // گورخر
+      rawWord(100, 200, ["Abandon"]),
+      rawWord(110, 200, ["\u0631\u0647\u0627"]), // رها
+    ]);
+    const corrector = new MockCorrector({
+      left: [
+        groundedEntry("Zebra", "\u06AF\u0648\u0631\u062E\u0631", 0),
+        groundedEntry("Abandon", "\u0631\u0647\u0627", 1),
+      ],
+    });
+    const result = await runPage(raw, 7, corrector, "r1");
+    const [zebra, abandon] = result.entries;
+    assert.equal(zebra?.needs_review, false);
+    assert.equal(abandon?.needs_review, true);
+    assert.ok(abandon?.review_reasons.includes("order_violation"));
   });
 });
 

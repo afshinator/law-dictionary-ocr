@@ -11,6 +11,7 @@ import { CorrectionError } from "./correct/errors.ts";
 import type { EventCode, RunEvent } from "./events.ts";
 import type { ColumnTranscript } from "./parse/lines.ts";
 import { buildColumnTranscripts, parseColumn } from "./parse/parser.ts";
+import { flagOrderViolations } from "./validate/cross-record.ts";
 
 export interface QuarantinePayload {
   run_id: string;
@@ -43,6 +44,7 @@ export async function runPage(
     const started = Date.now();
     try {
       const columnEntries = await parseColumn(transcript, pageNumber, corrector);
+      flagOrderViolations(columnEntries);
       const needsReviewCount = columnEntries.filter((e) => e.needs_review).length;
       const reviewReasons = [
         ...new Set(columnEntries.flatMap((e) => e.review_reasons)),

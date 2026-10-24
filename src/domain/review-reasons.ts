@@ -12,6 +12,7 @@ export const REVIEW_REASONS = [
   "grounding_fail", // A1: token absent from cited transcript
   "snippet_mismatch", // A2: snippet not verbatim
   "definition_mis_slot", // A4: non-empty definition without Latin
+  "order_violation", // A6: headword sorts before the previous one
 ] as const;
 
 export type ReviewReason = (typeof REVIEW_REASONS)[number];
