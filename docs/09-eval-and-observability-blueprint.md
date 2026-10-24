@@ -71,7 +71,7 @@ call.
 | A2 | Snippet verbatim | `raw_ocr_snippet` equals the cited lines joined by one space | reject the entry — the model rewrote OCR |
 | A3 | Coverage / partition | cited lines cover the whole transcript except a declared noise set (page numbers, running headers) | reject the page |
 | A4 | Mis-slot | `translation_fa` contains no Latin (already enforced); `definition_en` contains at least one Latin letter | flag `needs_review` |
-| A5 | Repair-retry | on A1–A4 failure, re-ask the model once with the violation appended | see §7 D2: the failing attempt quarantines the page |
+| A5 | Repair-retry | on A1–A4 failure, re-ask the model **once** with the violation appended | if the retry also fails, quarantine the page immediately — no further retries (§7 D2) |
 | A6 | Wire cross-record | call the existing `checkAlphabeticalContinuity` across a corpus pass, runover-tolerant | flag the offending entries |
 
 A1 is the load-bearing one: invented Farsi fails because the text is not in the OCR the
@@ -130,7 +130,7 @@ which is the same rule already applied to the 95% aggregate gate.
 | ID | Decision |
 | --- | --- |
 | **D1** | **Provider-agnostic.** No model id is pinned. Events record `provider` and `model` read from `config/llm.ts`. The owner will trial DeepSeek V4 Pro first, then others; the interface must not assume one vendor. |
-| **D2** | **Quarantine on validation failure.** A page that fails validation is quarantined, and the run continues rather than aborting. Repair-retry is bounded to a single attempt; see the open reading below. |
+| **D2** | **One repair attempt, then quarantine.** On validation failure the model is re-asked once with the violation appended. If that retry also fails, the page is quarantined immediately and the run continues. Ceiling: two model calls per column, ever. |
 | **D3** | **Per-field gates on the strict fields**: `headword_en` and `translation_fa` gate. Aggregate page accuracy is reported but never the sole gate, because high character accuracy can hide a dropped Farsi equivalent. `definition_en` is reported, not gated. |
 | **D4** | **Ground truth: 10–15 hand-keyed pages, single annotator.** Stratified for gutter margins, cross-page runovers, definition/example-heavy pages and multi-translation Farsi blocks. No inter-annotator agreement. |
 | **D5** | **Full text stays local.** Run artifacts under `data/runs/<run_id>/` keep raw transcripts for post-mortem grounding/parsing analysis. Keys redacted from logs; committed artifacts carry hashes, not page text. |
@@ -145,16 +145,22 @@ which is the same rule already applied to the 95% aggregate gate.
 | **O3** | Acceptable `needs_review` rate at corpus scale. | Cannot be set before measuring; guessing it would repeat the 95% mistake. |
 | **O4** | Per-field gate values. | Same rule: calibrate from the first measurement, never invent. |
 
-### Reading to confirm on D2
+### Still open: empty-field accounting under D3
 
-D2 says a failing page is quarantined immediately. Two readings, and they differ by one API
-call per failed column:
+D3 gates `translation_fa` recall, but the prompt *deliberately* returns an empty Farsi field
+when the source text is unrecoverable (rule 7, anti-confabulation). Those two rules meet
+awkwardly, and one decision is needed:
 
-- **(i)** one repair attempt first; if that attempt also fails validation, quarantine at once
-  and move on (no further retries).
-- **(ii)** no repair attempt at all: first validation failure quarantines immediately.
+- **(a) Count empty as wrong.** Simplest, strictest: an unreadable entry is a recall failure.
+  Consequence: a correct refusal to invent is scored as an extraction error, so the strictest
+  guardrail fights the fidelity metric.
+- **(b) Exclude empty from the gate, force `needs_review`.** The entry cannot enter user
+  search (per the flagged-out rule), so it is neither silently shipped nor counted as a miss.
+  Consequence: an extra state in the metric — "extracted but unreadable" — and a corpus-wide
+  count of how often refusal happened, which is itself worth watching.
 
-The document currently records **(i)** in A5. Confirm or switch to (ii).
+Not decided. It changes the meaning of the primary gate, so it should be settled before E1 is
+implemented.
 
 ## 8. Sequencing
 
