@@ -56,6 +56,25 @@ const ce = (patch: Partial<CorrectedEntry> = {}): CorrectedEntry => ({
   ...patch,
 });
 
+// Grounded fixture: cited lines carry every token of the entry's fields (Arabic yeh in
+// translation normalizes to the Persian yeh the lines use), and the snippet equals the
+// joined line text, so A1/A2/A4 all pass. Two lines so multi-line bbox union stays covered.
+const groundedVision = () =>
+  vision([
+    rawWord({ x: 100, y: 100, conf: 0.97, symbols: ["\u062D\u0642\u0648\u0642"] }),
+    rawWord({ x: 110, y: 100, conf: 0.97, symbols: ["\u0645\u0627\u0644\u06CC"] }),
+    rawWord({ x: 120, y: 100, conf: 0.97, symbols: ["To"] }),
+    rawWord({ x: 100, y: 200, conf: 0.97, symbols: ["give"] }),
+  ]);
+
+const groundedCe = (patch: Partial<CorrectedEntry> = {}): CorrectedEntry =>
+  ce({
+    definition_en: "To give",
+    raw_ocr_snippet: "\u062D\u0642\u0648\u0642 \u0645\u0627\u0644\u06CC To give",
+    line_indices: [0, 1],
+    ...patch,
+  });
+
 describe("readVisionWords", () => {
   it("flattens and concatenates symbol text, extracts bbox/lang/confidence", () => {
     const raw = vision([
@@ -139,27 +158,15 @@ describe("buildColumnTranscripts", () => {
 });
 
 describe("parsePage", () => {
-  it("returns clean entries: id, normalized headword, normalized translation, bbox union", async () => {
-    // two cited lines: y=100 (4 words) and y=200 (2 words), all conf 0.97
-    const raw = vision([
-      rawWord({ x: 100, y: 100, conf: 0.97 }),
-      rawWord({ x: 110, y: 100, conf: 0.97 }),
-      rawWord({ x: 120, y: 100, conf: 0.97 }),
-      rawWord({ x: 130, y: 100, conf: 0.97 }),
-      rawWord({ x: 100, y: 200, conf: 0.97 }),
-      rawWord({ x: 110, y: 200, conf: 0.97 }),
-    ]);
+  it("returns clean grounded entries: id, normalization, bbox, pass-through", async () => {
     const entries = await parsePage(
-      raw,
+      groundedVision(),
       5,
       stub({
         left: [
-          ce({
-            line_indices: [0, 1],
+          groundedCe({
             pronunciation: "əˈbændən",
             pos: "adv",
-            definition_en: "Custom definition.",
-            raw_ocr_snippet: "raw Abandon line",
             is_continuation: true,
           }),
         ],
@@ -171,15 +178,15 @@ describe("parsePage", () => {
     assert.equal(e?.headword_normalized, "abandon"); // lowercased
     // Arabic yeh U+064A -> Persian yeh U+06CC via normalizeFa
     assert.equal(e?.translation_fa, "\u062D\u0642\u0648\u0642 \u0645\u0627\u0644\u06CC");
-    // bbox = union of the two cited line bboxes ([100,100,36,20] u [100,200,16,20])
-    assert.deepEqual(e?.source_image.bbox, [100, 100, 36, 120]);
+    // bbox = union of the two cited line bboxes ([100,100,26,20] u [100,200,6,20])
+    assert.deepEqual(e?.source_image.bbox, [100, 100, 26, 120]);
     assert.equal(e?.confidence, 0.97);
     assert.equal(e?.needs_review, false);
     // pass-through fields (F3): corrector values land unmodified in the Entry
     assert.equal(e?.pronunciation, "əˈbændən");
     assert.equal(e?.pos, "adv");
-    assert.equal(e?.definition_en, "Custom definition.");
-    assert.equal(e?.raw_ocr_snippet, "raw Abandon line");
+    assert.equal(e?.definition_en, "To give");
+    assert.equal(e?.raw_ocr_snippet, "\u062D\u0642\u0648\u0642 \u0645\u0627\u0644\u06CC To give");
     assert.equal(e?.is_continuation, true);
   });
 
@@ -229,19 +236,18 @@ describe("parsePage", () => {
   });
 
   it("T-FIX1 mirror: all-high confidences are not flagged", async () => {
-    const raw = vision([
-      rawWord({ x: 100, y: 100, conf: 0.97 }),
-      rawWord({ x: 110, y: 100, conf: 0.97 }),
-      rawWord({ x: 120, y: 100, conf: 0.97 }),
-      rawWord({ x: 130, y: 100, conf: 0.97 }),
-    ]);
-    const entries = await parsePage(raw, 5, stub({ left: [ce()] }));
+    const entries = await parsePage(groundedVision(), 5, stub({ left: [groundedCe()] }));
     assert.equal(entries[0]?.needs_review, false);
   });
 
   it("F-D: no numeric confidences anywhere -> confidence null, gate skipped", async () => {
-    const raw = vision([rawWord({ x: 100, y: 100 }), rawWord({ x: 110, y: 100 })]);
-    const entries = await parsePage(raw, 5, stub({ left: [ce()] }));
+    const raw = vision([
+      rawWord({ x: 100, y: 100, symbols: ["\u062D\u0642\u0648\u0642"] }),
+      rawWord({ x: 110, y: 100, symbols: ["\u0645\u0627\u0644\u06CC"] }),
+      rawWord({ x: 120, y: 100, symbols: ["To"] }),
+      rawWord({ x: 130, y: 100, symbols: ["give"] }),
+    ]);
+    const entries = await parsePage(raw, 5, stub({ left: [groundedCe()] }));
     assert.equal(entries[0]?.confidence, null);
     assert.equal(entries[0]?.needs_review, false);
   });
@@ -261,5 +267,50 @@ describe("parsePage", () => {
       ["5-left-0", "5-right-0"],
     );
     assert.equal(entries[1]?.headword_normalized, "abate");
+  });
+
+  it("A1: a Farsi token absent from the cited transcript flags needs_review", async () => {
+    const entries = await parsePage(
+      groundedVision(),
+      5,
+      stub({
+        left: [
+          groundedCe({
+            translation_fa:
+              "\u062D\u0642\u0648\u0642 \u0645\u0627\u0644\u06CC \u062C\u0646\u0627\u06CC\u062A", // جنایت invented
+          }),
+        ],
+      }),
+    );
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
+  it("A2: a rewritten raw_ocr_snippet flags needs_review", async () => {
+    const entries = await parsePage(
+      groundedVision(),
+      5,
+      stub({
+        left: [
+          groundedCe({
+            raw_ocr_snippet: "\u062D\u0642\u0648\u0642 \u0645\u0627\u0644\u06CC To give!",
+          }),
+        ],
+      }),
+    );
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
+  it("A4: a non-empty Farsi-only definition_en flags needs_review", async () => {
+    const entries = await parsePage(
+      groundedVision(),
+      5,
+      stub({ left: [groundedCe({ definition_en: "\u062A\u0631\u06A9" })] }),
+    );
+    assert.equal(entries[0]?.needs_review, true);
+  });
+
+  it("A1/A2/A4: a grounded entry is not flagged", async () => {
+    const entries = await parsePage(groundedVision(), 5, stub({ left: [groundedCe()] }));
+    assert.equal(entries[0]?.needs_review, false);
   });
 });

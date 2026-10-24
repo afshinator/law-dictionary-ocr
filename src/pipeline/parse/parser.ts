@@ -7,6 +7,7 @@ import { LOW_CONFIDENCE_WORD } from "../../config/thresholds.ts";
 import type { Entry, Word } from "../../domain/types.ts";
 import type { CorrectedEntry, Corrector } from "../correct/corrector.ts";
 import { insertEntrySchema } from "../validate/entry-schema.ts";
+import { definitionMisSlotted, snippetVerbatim, ungroundedTokens } from "../validate/guards.ts";
 import { normalizeFa } from "../validate/normalize.ts";
 import {
   englishHeadwordSchema,
@@ -109,6 +110,21 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
   );
   const translation_fa = normalizeFa(ce.translation_fa);
 
+  // Guardrails (docs/09 §4): prove the entry's text traces to the cited transcript, not
+  // the model's imagination. A1/A2/A4 run here because `usedLines` is in scope; `Entry`
+  // does not carry line_indices. A2 "reject" is realized as needs_review: there is no
+  // drop path, and every failure routes to human review rather than silent discard.
+  const citedText = usedLines.map((l) => l.text).join(" ");
+  const ungrounded = [
+    ...ungroundedTokens(translation_fa, citedText),
+    ...ungroundedTokens(ce.definition_en ?? "", citedText),
+  ];
+  const snippetTampered = !snippetVerbatim(
+    ce.raw_ocr_snippet,
+    usedLines.map((l) => l.text),
+  );
+  const misSlottedDefinition = definitionMisSlotted(ce.definition_en);
+
   const entry: Entry = {
     entry_id: `${pageNumber}-${transcript.column}-${ce.line_indices[0] ?? 0}`, // shortcut: entry_id collides on empty/duplicate first line_indices; fix in the id/DB ticket
     headword_en: ce.headword_en,
@@ -138,7 +154,10 @@ function toEntry(ce: CorrectedEntry, transcript: ColumnTranscript, pageNumber: n
     !farsiOk ||
     !enOk ||
     looksSuspiciousFa(translation_fa) ||
-    lowConfidence
+    lowConfidence ||
+    ungrounded.length > 0 ||
+    snippetTampered ||
+    misSlottedDefinition
   ) {
     entry.needs_review = true;
   }
