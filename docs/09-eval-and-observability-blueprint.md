@@ -94,6 +94,10 @@ Metric definitions, to be recorded in an ADR before implementation:
   wrong text, and the current harness cannot separate them.
 - **E4 Text fidelity** — Persian CER (exists); English WER (missing).
 - **E5 Grounding rate** — share of entries passing A1.
+- **E6 Refusal rate** — share of extracted entries whose `translation_fa` is empty because
+  the source was unreadable. Not part of any accuracy gate: it measures how often the
+  pipeline correctly chose safety over invention, and a sudden rise means capture quality
+  dropped. Reported alongside E1–E5 and tracked per page (§7 D7).
 - **Deferred deliberately:** retrieval precision@k / recall@k and context-precision /
   factuality. There is no retrieval code in this repository; those metrics need an index and
   belong to the deployed release.
@@ -134,7 +138,8 @@ which is the same rule already applied to the 95% aggregate gate.
 | **D3** | **Per-field gates on the strict fields**: `headword_en` and `translation_fa` gate. Aggregate page accuracy is reported but never the sole gate, because high character accuracy can hide a dropped Farsi equivalent. `definition_en` is reported, not gated. |
 | **D4** | **Ground truth: 10–15 hand-keyed pages, single annotator.** Stratified for gutter margins, cross-page runovers, definition/example-heavy pages and multi-translation Farsi blocks. No inter-annotator agreement. |
 | **D5** | **Full text stays local.** Run artifacts under `data/runs/<run_id>/` keep raw transcripts for post-mortem grounding/parsing analysis. Keys redacted from logs; committed artifacts carry hashes, not page text. |
-| **D6** | **Retrieval and RAG evals are deferred.** No index exists; scope stays on extraction and grounding evals (E1–E5) until the search layer is built. |
+| **D6** | **Retrieval and RAG evals are deferred.** No index exists; scope stays on extraction and grounding evals (E1–E6) until the search layer is built. |
+| **D7** | **Deliberate refusals are not errors.** An entry whose `translation_fa` is empty because the source was unreadable leaves the E1 recall denominator and routes to `needs_review`. Counting refusals as extraction errors would penalise the system for choosing safety over invention. Refusal volume is tracked separately as `refusal_rate` (E6), an operational health metric, not an accuracy signal. |
 
 ### Still open
 
@@ -145,22 +150,11 @@ which is the same rule already applied to the 95% aggregate gate.
 | **O3** | Acceptable `needs_review` rate at corpus scale. | Cannot be set before measuring; guessing it would repeat the 95% mistake. |
 | **O4** | Per-field gate values. | Same rule: calibrate from the first measurement, never invent. |
 
-### Still open: empty-field accounting under D3
+### Closed: empty-field accounting under D3
 
-D3 gates `translation_fa` recall, but the prompt *deliberately* returns an empty Farsi field
-when the source text is unrecoverable (rule 7, anti-confabulation). Those two rules meet
-awkwardly, and one decision is needed:
-
-- **(a) Count empty as wrong.** Simplest, strictest: an unreadable entry is a recall failure.
-  Consequence: a correct refusal to invent is scored as an extraction error, so the strictest
-  guardrail fights the fidelity metric.
-- **(b) Exclude empty from the gate, force `needs_review`.** The entry cannot enter user
-  search (per the flagged-out rule), so it is neither silently shipped nor counted as a miss.
-  Consequence: an extra state in the metric — "extracted but unreadable" — and a corpus-wide
-  count of how often refusal happened, which is itself worth watching.
-
-Not decided. It changes the meaning of the primary gate, so it should be settled before E1 is
-implemented.
+Settled by D7. Empty-by-refusal entries leave the E1 denominator and go to `needs_review`;
+refusal volume becomes E6. Precision and recall stay clean, and the safety behaviour gets its
+own number instead of contaminating the accuracy gate.
 
 ## 8. Sequencing
 
