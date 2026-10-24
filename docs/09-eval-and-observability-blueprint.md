@@ -1,9 +1,10 @@
 # 09 — Evaluation, guardrails and observability blueprint
 
 **Date:** 2026-10-23
-**Version:** 0.2 — decisions taken
-**Status:** Decisions recorded in §7. Metric and guardrail designs remain **proposed** until
-implemented; threshold *values* are deliberately unset pending the first real measurement.
+**Version:** 0.3 — sequencing approved
+**Status:** Decisions recorded in §7 (D1–D11); sequence approved in §8. Metric and guardrail
+designs remain **proposed** until implemented; threshold *values* are deliberately unset
+pending the first real measurement.
 
 Evidence basis: direct inspection of `src/` at commit `d575689`. Every claim about current
 behaviour cites a file.
@@ -67,11 +68,11 @@ call.
 
 | ID | Guard | Mechanism | Proposed failure policy |
 | --- | --- | --- | --- |
-| A1 | Grounding | every non-empty token of `translation_fa` (and `definition_en`) must appear in the concatenated text of the entry's cited lines | flag `needs_review`, emit event |
+| A1 | Grounding | every non-empty token of `translation_fa` (and `definition_en`) must appear in the entry's cited transcript lines, compared after stripping whitespace and ZWNJ (§7 D8). Grounds against the transcript, never against the model-authored `raw_ocr_snippet` | flag `needs_review`, emit event |
 | A2 | Snippet verbatim | `raw_ocr_snippet` equals the cited lines joined by one space | reject the entry — the model rewrote OCR |
 | A3 | Coverage / partition | cited lines cover the whole transcript except a declared noise set (page numbers, running headers) | reject the page |
 | A4 | Mis-slot | `translation_fa` contains no Latin (already enforced); `definition_en` contains at least one Latin letter | flag `needs_review` |
-| A5 | Repair-retry | on A1–A4 failure, re-ask the model **once** with the violation appended | if the retry also fails, quarantine the page immediately — no further retries (§7 D2) |
+| A5 | Repair-retry | on A1–A4 failure, re-ask the model **once** with the violation appended | if the retry also fails, quarantine **the column** immediately — no further retries, and the other column still runs (§7 D2, D9) |
 | A6 | Wire cross-record | call the existing `checkAlphabeticalContinuity` across a corpus pass, runover-tolerant | flag the offending entries |
 
 A1 is the load-bearing one: invented Farsi fails because the text is not in the OCR the
@@ -88,7 +89,9 @@ Metric definitions, to be recorded in an ADR before implementation:
   page accuracy cannot hide a dropped Farsi equivalent. `definition_en` is reported and
   flags, but is not a gate.
 - **E2 Segmentation F1** — predicted entry-start lines vs keyed entry-start lines. Catches
-  one printed entry split into two records, and two records merged into one.
+  one printed entry split into two records, and two records merged into one. Requires an
+  optional `first_line_index` on each answer-key row; add it **before** hand-keying any page
+  (§7 D11).
 - **E3 Bilingual alignment accuracy** — fraction of paired entries whose `translation_fa`
   came from the same keyed row as its headword. Misalignment is a distinct failure from
   wrong text, and the current harness cannot separate them.
@@ -116,7 +119,9 @@ which is the same rule already applied to the 95% aggregate gate.
 
 - **O1 Events** — one JSONL line per stage completion:
   `{run_id, page, side, stage, outcome, duration_ms, error_code?, model?, tokens_in?, tokens_out?}`.
-  Written under `data/runs/<run_id>/events.jsonl` (gitignored, like the scans).
+  Written under `data/runs/<run_id>/events.jsonl` (gitignored, like the scans). A quarantined
+  column's payload goes to `data/runs/<run_id>/quarantine/<page>-<side>.json` plus one event
+  line, so a failure is inspectable and never silent (§7 D10).
 - **O2 Error taxonomy** — a closed enum rather than free text: `http_error`, `empty_ocr`,
   `invalid_json`, `schema_invalid`, `line_indices_invalid`, `grounding_fail`,
   `snippet_mismatch`, `coverage_fail`.
@@ -139,6 +144,10 @@ which is the same rule already applied to the 95% aggregate gate.
 | **D4** | **Ground truth: 10–15 hand-keyed pages, single annotator.** Stratified for gutter margins, cross-page runovers, definition/example-heavy pages and multi-translation Farsi blocks. No inter-annotator agreement. |
 | **D5** | **Full text stays local.** Run artifacts under `data/runs/<run_id>/` keep raw transcripts for post-mortem grounding/parsing analysis. Keys redacted from logs; committed artifacts carry hashes, not page text. |
 | **D6** | **Retrieval and RAG evals are deferred.** No index exists; scope stays on extraction and grounding evals (E1–E6) until the search layer is built. |
+| **D8** | **A1 compares on a stripped form.** Whitespace and ZWNJ (نیم‌فاصله) are removed before comparison, because Farsi typography varies spacing legitimately and exact matching would produce a large false-positive rate. Grounding target is the cited transcript text, not the model-authored snippet. |
+| **D9** | **Quarantine is column-scoped.** A page is two columns and each is one model call, so a failing column is abandoned while the other still runs. |
+| **D10** | **Quarantine sink:** `data/runs/<id>/quarantine/<page>-<side>.json` plus one JSONL event line. Local-first, filesystem-isolated, never silent. |
+| **D11** | **Guardrails before credentials.** Pure-function guards, the answer-key schema change and a mock corrector land before any API credit is spent. Per-field gate values and percentile/cost aggregation wait for real runs. |
 | **D7** | **Deliberate refusals are not errors.** An entry whose `translation_fa` is empty because the source was unreadable leaves the E1 recall denominator and routes to `needs_review`. Counting refusals as extraction errors would penalise the system for choosing safety over invention. Refusal volume is tracked separately as `refusal_rate` (E6), an operational health metric, not an accuracy signal. |
 
 ### Still open
@@ -156,13 +165,21 @@ Settled by D7. Empty-by-refusal entries leave the E1 denominator and go to `need
 refusal volume becomes E6. Precision and recall stay clean, and the safety behaviour gets its
 own number instead of contaminating the accuracy gate.
 
-## 8. Sequencing
+## 8. Sequencing (approved)
 
-1. A1–A4 as pure functions, test-first (no pages needed).
-2. E1–E5 metric functions with synthetic tests; real numbers require keyed pages.
-3. O1–O4, because ticket #8 cannot be diagnosed without them.
-4. A5/A6 policy wiring, including per-field gating (D3).
-5. ADRs written alongside, not afterwards: eval definitions, failure policy, model
-   selection and cost, logging format.
+Ordered to spend effort before credits, and to make the one real run diagnosable.
 
-None of this blocks ticket #8 — #8 blocks on credentials and capture, not on this blueprint.
+1. **Phase 1 — guardrails + minimal telemetry**
+   A1–A4 inside `toEntry()` (where the cited lines are in scope; `Entry` does not carry
+   `line_indices`), A6 continuity wiring (per column *and* corpus-wide), the minimal O1 event
+   sink that quarantine needs (D10), and a `MockCorrector` so the guards can be exercised
+   through `parsePage` with no key.
+2. **Phase 2 — evaluation**
+   E1–E6 in `src/eval/`, the answer-key schema change (`first_line_index`, D11), then ADRs as
+   short pointers to this document (§7) — not restatements, which would drift.
+3. **Ticket #8 — end-to-end run**, once credentials and captures exist. It validates the
+   guardrails against real pages.
+4. **Phase 3 — full observability**: percentile and cost aggregation, which is only worth
+   building once there are events to aggregate.
+
+Nothing in Phases 1–2 needs Google Vision or an LLM key. #8 blocks on both.
