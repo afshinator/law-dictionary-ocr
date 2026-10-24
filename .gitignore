@@ -15,3 +15,7 @@ old-second/gcp-key*.*
 # storage (cloud bucket / external drive) separately. This line is a risk, not a plan.
 data/
 .fallow/
+
+# Agent run telemetry (transcripts, spans, tool calls) is never committed:
+# D5 forbids page text and keys in committed artifacts.
+mypi-tasks/*/run-details/

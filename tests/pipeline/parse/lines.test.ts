@@ -3,7 +3,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { unionBbox, type Word } from "../../../src/pipeline/parse/columns.ts";
+import type { Word } from "../../../src/domain/types.ts";
+import { unionBbox } from "../../../src/pipeline/parse/columns.ts";
 import { groupIntoLines } from "../../../src/pipeline/parse/lines.ts";
 
 const mkWord = (

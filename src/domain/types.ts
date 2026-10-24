@@ -33,15 +33,16 @@ export interface Entry {
   needs_review: boolean;
   /** closed set of why needs_review is set (docs/09 §6); empty when clean */
   review_reasons: ReviewReason[];
-  /** min/avg of the entry's Vision word confidences */
+  /** mean of the entry's cited-line confidences (display/audit); the low_confidence
+   *  gate uses the min per-word confidence, computed at parse time */
   confidence: number | null;
 }
 
 /** Internal normalized word. Built from raw Vision JSON by the parser.
  *  languageCode is a WEAK hint only (Vision mis-tags English) -- separation is by
  *  script + column, not this field (docs 2, docs 9).
- *  Divergence D2: lives in types.ts (source: parser/columns.ts) per the DoD;
- *  columns.ts re-exports it. Field names identical. */
+ *  Divergence D2: lives in types.ts (source: parser/columns.ts) per the DoD.
+ *  Field names identical. */
 export interface Word {
   /** reconstructed by concatenating symbols[].text (no word-level text field exists) */
   text: string;

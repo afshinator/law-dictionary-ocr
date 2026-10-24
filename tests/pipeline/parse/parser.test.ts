@@ -234,7 +234,7 @@ describe("parsePage", () => {
     const entries = await parsePage(raw, 5, stub({ left: [ce()] }));
     const e = entries[0];
     // the mean (source toEntry's gate input) clears LOW_CONFIDENCE_WORD ...
-    assert.ok(e?.confidence !== null && e.confidence >= LOW_CONFIDENCE_WORD);
+    assert.ok(e !== undefined && e.confidence !== null && e.confidence >= LOW_CONFIDENCE_WORD);
     // ... yet the min-cited-word gate flags it (D1/T-FIX1, register #8)
     assert.equal(e?.needs_review, true);
     assert.ok(e?.review_reasons.includes("low_confidence"));
