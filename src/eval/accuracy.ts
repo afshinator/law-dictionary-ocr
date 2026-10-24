@@ -102,34 +102,35 @@ export function compareToAnswerKey(entries: Entry[], page: AnswerKeyPage): Accur
     }
     const actual = remaining.splice(index, 1)[0] as Entry;
 
-    const fieldChecks: [MismatchField, string, string][] = [
-      ["headword_en", normaliseEnglish(row.headword_en), normaliseEnglish(actual.headword_en)],
-      ["translation_fa", normaliseFarsi(row.translation_fa), normaliseFarsi(actual.translation_fa)],
-      [
-        "definition_en",
-        normaliseEnglish(row.definition_en),
-        normaliseEnglish(actual.definition_en),
-      ],
-    ];
+    // docs/09 D3: headword_en + translation_fa gate; definition_en is reported only.
+    // headword_en already matched by pairing, so translation_fa is the remaining gate.
+    const wantFa = normaliseFarsi(row.translation_fa);
+    const gotFa = normaliseFarsi(actual.translation_fa);
+    const wantDef = normaliseEnglish(row.definition_en);
+    const gotDef = normaliseEnglish(actual.definition_en);
 
-    const differing = fieldChecks.filter(([, want, got]) => want !== got);
-    if (differing.length === 0) {
+    if (wantFa === gotFa) {
       correct++;
-      continue;
-    }
-
-    for (const [field, want, got] of differing) {
+    } else {
       mismatches.push({
         headword_en: row.headword_en,
         reason: "field",
-        field,
-        expected: want,
-        actual: got,
+        field: "translation_fa",
+        expected: wantFa,
+        actual: gotFa,
       });
+      if (isDotOnlyDifference(wantFa, gotFa)) {
+        dotFailures.push({ headword_en: row.headword_en, expected: wantFa, actual: gotFa });
+      }
     }
-    const [, wantFa, gotFa] = fieldChecks[1] as [MismatchField, string, string];
-    if (isDotOnlyDifference(wantFa, gotFa)) {
-      dotFailures.push({ headword_en: row.headword_en, expected: wantFa, actual: gotFa });
+    if (wantDef !== gotDef) {
+      mismatches.push({
+        headword_en: row.headword_en,
+        reason: "field",
+        field: "definition_en",
+        expected: wantDef,
+        actual: gotDef,
+      });
     }
   }
 
@@ -138,11 +139,14 @@ export function compareToAnswerKey(entries: Entry[], page: AnswerKeyPage): Accur
   }
 
   const total = page.entries.length;
+  const extraCount = remaining.length;
   const ref = referenceText(page.entries);
   return {
     total,
     correct,
-    accuracy: total === 0 ? 1 : correct / total,
+    // Extra (invented) entries are errors too: correct entries over printed + invented.
+    // A confabulating corrector must not score 100% by matching only the key rows.
+    accuracy: total + extraCount === 0 ? 0 : correct / (total + extraCount),
     cer: ref.length === 0 ? 0 : levenshtein(ref, scoredText(entries)) / ref.length,
     mismatches,
     dotFailures,
@@ -157,6 +161,9 @@ export interface GateResult {
 /** The POC gate: accuracy at or above the configured minimum, and no missing dots at all. */
 export function gateReport(report: AccuracyReport): GateResult {
   const reasons: string[] = [];
+  if (report.total === 0) {
+    reasons.push("answer key is empty — nothing to measure");
+  }
   if (report.accuracy < ENTRY_ACCURACY_MIN) {
     reasons.push(
       `accuracy ${(report.accuracy * 100).toFixed(1)}% is below the ${(ENTRY_ACCURACY_MIN * 100).toFixed(1)}% minimum`,

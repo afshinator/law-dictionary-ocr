@@ -51,7 +51,7 @@ describe("compareToAnswerKey", () => {
     assert.deepEqual(r.mismatches, []);
   });
 
-  it("counts an entry wrong when any field differs", () => {
+  it("reports a definition_en mismatch without failing the gated fields (D3)", () => {
     const rows = key([
       { headword_en: "Abet", translation_fa: "معاونت کردن", definition_en: "To aid" },
       { headword_en: "Abate", translation_fa: "فروکش کردن", definition_en: "To reduce" },
@@ -60,10 +60,42 @@ describe("compareToAnswerKey", () => {
       [entry("Abet", "معاونت کردن", "To aid"), entry("Abate", "فروکش کردن", "To diminish")],
       rows,
     );
-    assert.equal(r.correct, 1);
-    assert.equal(r.accuracy, 0.5);
+    assert.equal(r.correct, 2); // headword + translation match on both
+    assert.equal(r.accuracy, 1);
     assert.equal(r.mismatches.length, 1);
     assert.equal(r.mismatches[0]?.field, "definition_en");
+  });
+
+  it("counts an entry wrong when translation_fa differs (gated field)", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    const r = compareToAnswerKey([entry("Abet", "wrong", null)], rows);
+    assert.equal(r.correct, 0);
+    assert.equal(r.accuracy, 0);
+    assert.equal(r.mismatches[0]?.field, "translation_fa");
+  });
+
+  it("lowers accuracy for a produced entry with no key row (F9)", () => {
+    const rows = key([{ headword_en: "Abet", translation_fa: "x", definition_en: null }]);
+    const perfect = compareToAnswerKey([entry("Abet", "x", null)], rows);
+    assert.equal(perfect.accuracy, 1);
+    assert.equal(gateReport(perfect).pass, true);
+
+    const withExtra = compareToAnswerKey(
+      [entry("Abet", "x", null), entry("Hallucinated", "y", null)],
+      rows,
+    );
+    assert.equal(withExtra.accuracy, 0.5); // 1 correct / (1 key row + 1 extra)
+    assert.equal(gateReport(withExtra).pass, false);
+  });
+
+  it("does not classify a digit substitution as a dot failure (F11 decision)", () => {
+    // Persian digit integrity is a capture-time human check (docs/08 §3), not a nuqta
+    // family. An OCR-side digit error is caught as a field mismatch + CER instead.
+    const rows = key([{ headword_en: "Abet", translation_fa: "ماده ۵", definition_en: null }]);
+    const r = compareToAnswerKey([entry("Abet", "ماده ۰", null)], rows);
+    assert.equal(r.dotFailures.length, 0);
+    assert.equal(r.correct, 0);
+    assert.ok(r.cer > 0);
   });
 
   it("matches through normalisation (Arabic yeh typed in the key)", () => {
@@ -151,6 +183,13 @@ describe("gateReport", () => {
     const g = gateReport(r);
     assert.equal(g.pass, false);
     assert.match(g.reasons.join(" "), /dot/i);
+  });
+
+  it("fails on an empty answer key (F8)", () => {
+    const r = compareToAnswerKey([], key([]));
+    const g = gateReport(r);
+    assert.equal(g.pass, false);
+    assert.match(g.reasons.join(" "), /empty/i);
   });
 });
 
