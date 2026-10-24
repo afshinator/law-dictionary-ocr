@@ -6,11 +6,12 @@ source-page crop visible per entry.
 
 ## Status
 
-v3 — code complete. The pipeline (capture → OCR → parse → guard → correct → run/quarantine)
-is implemented and covered by 212 tests. The POC run is
-[issue #8](https://github.com/afshinator/law-dictionary-ocr/issues/8) — unblocked in code, waiting
-on three inputs: a Google Cloud Vision service-account key, an LLM API key + model id, and ~10
-captured pages per `docs/08-capture-protocol.md`. The POC spec is
+v3 — pipeline components implemented and covered by 212 tests (capture → OCR → parse → guard →
+correct → run/quarantine). The end-to-end POC run is
+[issue #8](https://github.com/afshinator/law-dictionary-ocr/issues/8) — it still needs a CLI
+driver and answer-key loader before it can execute, then three inputs: a Google Cloud Vision
+service-account key, an LLM API key + model id, and ~10 captured pages per
+`docs/08-capture-protocol.md`. The POC spec is
 [issue #1](https://github.com/afshinator/law-dictionary-ocr/issues/1): prove capture + OCR +
 segmentation to 95% entry accuracy with no lost Farsi dots.
 
@@ -37,11 +38,12 @@ human review, never silent discard:
   (نیم‌فاصله). Invented Farsi fails because the text is not in the OCR.
 - **A2 snippet verbatim** — `raw_ocr_snippet` must equal the cited lines joined by one space,
   so the displayed crop's provenance is trustworthy.
-- **A3 coverage** — reports transcript lines no entry cites (excluding page-number/running-
-  header noise). Report-only: ADR-0004 allows dropping unrecoverable garbage.
+- **A3 coverage** — defines the transcript lines no entry cites (excluding page-number/running-
+  header noise). Report-only: ADR-0004 allows dropping unrecoverable garbage; not yet invoked by
+  the runner.
 - **A4 mis-slot** — a non-empty `definition_en` must contain at least one Latin letter.
 - **A6 alphabetical continuity** — a headword that sorts before the previous one flags both,
-  runover continuations skipped, checked per column and across the corpus.
+  runover continuations skipped; wired per column, the corpus-wide pass not yet invoked.
 - **A5 repair-retry** — deferred (at most one retry; not implemented).
 
 Every failure sets `needs_review` with a closed enum of reasons (`schema_invalid`,
